@@ -55,7 +55,6 @@ A modern, full-stack documentation platform built with Next.js 15 and Supabase. 
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your_supabase_publishable_key
    NEXT_PUBLIC_SITE_URL=http://localhost:3000
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
    ```
 
 4. **Set up the database**
@@ -80,9 +79,7 @@ A modern, full-stack documentation platform built with Next.js 15 and Supabase. 
 |----------|-------------|----------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` | Supabase publishable/anon key for client-side operations | Yes |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key for server-side operations | Yes |
 | `NEXT_PUBLIC_SITE_URL` | Base URL for sitemap and robots.txt generation | No |
-| `NODE_ENV` | Environment mode (development/production) | No |
 
 ## Project Structure
 
