@@ -29,7 +29,7 @@ export function useCreateDocument() {
 
       return response.json()
     },
-    onSuccess: (_result) => {
+    onSuccess: () => {
       // Invalidate and refetch documents list
       invalidateQueries.documents(queryClient)
       invalidateQueries.dashboardStats(queryClient)

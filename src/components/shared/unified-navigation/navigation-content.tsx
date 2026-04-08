@@ -12,7 +12,6 @@ import { UserSection } from "./user-section"
 
 interface NavigationContentProps extends Omit<UnifiedNavigationProps, 'isMobile' | 'styles'> {
   navigation: UseNavigationReturn
-  styles?: typeof unifiedNavigationStyles
 }
 
 export function NavigationContent({
@@ -23,11 +22,10 @@ export function NavigationContent({
   showUserSection = true,
   onNavigate,
   className = "",
-  styles: customStyles,
   navigation
 }: NavigationContentProps) {
   const pathname = usePathname()
-  const styles = mergeNavigationStyles(unifiedNavigationStyles, variant, customStyles)
+  const styles = mergeNavigationStyles(unifiedNavigationStyles, variant)
 
   // Show loading state for dynamic navigation
   if (navigation.state.loading && variant === 'docs') {

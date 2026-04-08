@@ -405,7 +405,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
           ...saveData,
         },
         {
-          onSuccess: (_updatedDocument) => {
+          onSuccess: () => {
             setLastSaved(new Date())
             setLastSavedData(saveData)
             // Update the form data to reflect the new status

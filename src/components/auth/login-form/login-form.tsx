@@ -43,7 +43,7 @@ export default function LoginForm({
         router.push(redirectTo)
         router.refresh()
       }
-    } catch (_err) {
+    } catch {
       setError("An unexpected error occurred")
     } finally {
       setLoading(false)

@@ -53,7 +53,7 @@ export default function RegisterForm({
       if (onSuccess) {
         onSuccess()
       }
-    } catch (_err) {
+    } catch {
       setError("An unexpected error occurred")
     } finally {
       setLoading(false)

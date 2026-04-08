@@ -86,7 +86,7 @@ export default function CategoriesManager({
           ...categoryData,
         },
         {
-          onSuccess: (_response) => {
+          onSuccess: () => {
             resetForm()
             router.refresh()
           },
@@ -98,7 +98,7 @@ export default function CategoriesManager({
     } else {
       // Create new category
       createCategoryMutation.mutate(categoryData, {
-        onSuccess: (_response) => {
+        onSuccess: () => {
           resetForm()
           router.refresh()
         },

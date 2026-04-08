@@ -126,7 +126,6 @@ export const variantStyles = {
 export function mergeNavigationStyles(
   baseStyles: typeof unifiedNavigationStyles,
   variant: "dashboard" | "docs" | "custom",
-  _customStyles?: unknown,
 ): typeof unifiedNavigationStyles {
   const variantOverrides = variantStyles[variant] as Partial<typeof unifiedNavigationStyles>
 
