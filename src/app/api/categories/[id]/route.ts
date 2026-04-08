@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { Database } from '@/types/database'
+
+type Category = Database['public']['Tables']['categories']['Row']
 
 export async function GET(
   request: NextRequest,
@@ -111,6 +114,59 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Check if category exists and get its details
+    const { data: category, error: fetchError } = await supabase
+      .from('categories')
+      .select('id, name')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Category not found' }, { status: 404 })
+      }
+      return NextResponse.json({ error: fetchError.message }, { status: 400 })
+    }
+
+    if (!category) {
+      return NextResponse.json({ error: 'Category not found' }, { status: 404 })
+    }
+
+    // Type assertion to ensure TypeScript knows category is not null
+    const categoryData = category as Category
+
+    // Check if any documents are using this category
+    const { data: documentsUsingCategory } = await supabase
+      .from('documents')
+      .select('id')
+      .eq('category_id', id)
+
+    const documentCount = documentsUsingCategory?.length || 0
+
+    // Check if any subcategories have this category as parent
+    const { data: subcategories } = await supabase
+      .from('categories')
+      .select('id, name')
+      .eq('parent_id', id)
+
+    const subcategoryCount = subcategories?.length || 0
+
+    // Prevent deletion if category is in use
+    if (documentCount > 0) {
+      return NextResponse.json(
+        { error: `Cannot delete category "${categoryData.name}" because it contains ${documentCount} document(s)` },
+        { status: 409 }
+      )
+    }
+
+    if (subcategoryCount > 0) {
+      return NextResponse.json(
+        { error: `Cannot delete category "${categoryData.name}" because it has ${subcategoryCount} subcategory(ies)` },
+        { status: 409 }
+      )
+    }
+
+    // Safe to delete - no documents or subcategories depend on this category
     const { error } = await supabase
       .from('categories')
       .delete()

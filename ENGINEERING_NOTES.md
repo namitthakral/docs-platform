@@ -76,7 +76,7 @@ Server-side state is managed through Supabase with Row Level Security:
 
 - Public documents: Accessible to everyone when `status = 'published'`
 - User documents: Scoped by `auth.uid() = user_id`
-- Categories: Public categories visible to all, private ones only to authenticated users
+- Categories: Shared across users with public/private visibility and usage protection
 
 ### Query Client Isolation
 
@@ -280,6 +280,7 @@ export async function generateMetadata({
 ## 8. Optional Enhancements Implemented
 
 ### Draft vs Published Document States
+
 Full draft/published workflow is implemented with database-level enforcement:
 
 ```sql
@@ -292,6 +293,7 @@ CREATE POLICY "Published documents are viewable by everyone" ON documents
 ```
 
 **Implementation details:**
+
 - Documents default to `draft` status when created
 - `published_at` timestamp automatically set when status changes to published via trigger
 - Dashboard shows status badges and allows publish/unpublish actions
@@ -300,9 +302,10 @@ CREATE POLICY "Published documents are viewable by everyone" ON documents
 - Status transitions handled through `/api/documents/[id]` PUT endpoint
 
 **Status transition locations:**
+
 - Mutation hook: `useUpdateDocument()` in `src/hooks/use-document-mutations.ts` handles all document updates including status changes
 - Database trigger: `update_published_at()` function automatically manages `published_at` timestamp
-- UI controls: 
+- UI controls:
   - Publish button in document editor header (saves content + sets status to published)
   - Status radio buttons in document editor sidebar (draft/published toggle)
   - Both use the same unified update endpoint
@@ -401,3 +404,114 @@ Several performance enhancements are implemented:
 - Debounced search to reduce API calls
 - Query client isolation prevents cross-user data leakage
 - `useSyncExternalStore` for hydration safety in `ClientOnly` wrapper
+
+## 9. Category & Tag Architecture
+
+### Shared Global Taxonomy Approach
+
+Categories and tags are shared across all authenticated users with no user-specific ownership or isolation.
+
+**Rationale:**
+
+- **Team Collaboration:** Documentation platforms benefit from consistent taxonomies
+- **Content Discoverability:** Shared categories improve navigation and search effectiveness
+- **Simplicity:** Reduces complexity in state management and UI logic
+- **Public Page Consistency:** Ensures coherent structure for public documentation
+
+### Data Model
+
+```sql
+-- Categories support hierarchy and public/private visibility
+CREATE TABLE categories (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  description TEXT,
+  parent_id UUID REFERENCES categories(id),
+  sort_order INTEGER DEFAULT 0,
+  is_public BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tags are simple labels with many-to-many relationship to documents
+CREATE TABLE tags (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL UNIQUE,
+  slug TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE document_tags (
+  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+  tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  PRIMARY KEY (document_id, tag_id)
+);
+```
+
+### Usage Protection & Data Integrity
+
+**Category Deletion Protection:**
+
+- Cannot delete categories that contain documents
+- Cannot delete categories that have subcategories
+- Provides clear error messages with usage counts
+
+**Tag Deletion Protection:**
+
+- Cannot delete tags that are assigned to documents
+- Shows usage count in error messages
+
+```typescript
+// Example: Category deletion with usage protection
+const { data: documentsUsingCategory } = await supabase
+  .from("documents")
+  .select("id")
+  .eq("category_id", id)
+
+const documentCount = documentsUsingCategory?.length || 0
+
+if (documentCount > 0) {
+  return NextResponse.json(
+    {
+      error: `Cannot delete category "${category.name}" because it contains ${documentCount} document(s)`,
+    },
+    { status: 409 },
+  )
+}
+```
+
+### Default Categories
+
+The system includes pre-seeded categories to provide immediate structure:
+
+- **Getting Started** - Essential guides for new users
+- **API Reference** - Comprehensive API documentation
+- **Tutorials** - Step-by-step tutorials and examples
+- **FAQ** - Frequently asked questions
+- **Internal Docs** - Private documentation (is_public: false)
+
+### Trade-offs & Future Considerations
+
+**Current Benefits:**
+
+- Simple implementation and maintenance
+- Collaborative taxonomy management
+- Consistent content organization
+- Effective for team-based documentation
+
+**Potential Limitations:**
+
+- No user isolation (suitable for trusted teams)
+- Potential for conflicts in large organizations
+- No ownership tracking or audit trail
+
+**Future Enhancements Considered:**
+
+- **Audit Trail:** Track all taxonomy changes for accountability
+  - Decided to skip for MVP due to time constraints
+  - Would implement in production for compliance/debugging
+- **User Ownership:** Individual category/tag ownership with sharing
+  - Current shared model works well for team collaboration
+  - Could add if user base scales significantly

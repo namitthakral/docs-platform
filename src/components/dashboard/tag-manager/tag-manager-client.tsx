@@ -70,6 +70,14 @@ export default function TagManagerClient() {
   const confirmDelete = async () => {
     if (!deleteDialog.tag) return
 
+    // Check if tag is in use - if so, just close dialog (this is an info dialog)
+    const tag = tags.find(t => t.id === deleteDialog.tag?.id)
+    const usageCount = tag?.usage_count || 0
+    if (usageCount > 0) {
+      setDeleteDialog({ isOpen: false, tag: null })
+      return
+    }
+
     setError(null)
     try {
       await deleteTagMutation.mutateAsync(deleteDialog.tag.id)
@@ -289,12 +297,43 @@ export default function TagManagerClient() {
         title="Delete Tag"
         message={
           deleteDialog.tag
-            ? `Are you sure you want to delete the tag "${deleteDialog.tag.name}"? This action cannot be undone.`
+            ? (() => {
+                const tag = tags.find(t => t.id === deleteDialog.tag?.id)
+                const usageCount = tag?.usage_count || 0
+                if (usageCount > 0) {
+                  return `Cannot delete tag "${deleteDialog.tag.name}" because it is used by ${usageCount} document(s). Please remove the tag from documents first.`
+                }
+                return `Are you sure you want to delete the tag "${deleteDialog.tag.name}"? This action cannot be undone.`
+              })()
             : ""
         }
-        confirmText="Delete"
-        cancelText="Cancel"
-        variant="danger"
+        confirmText={
+          deleteDialog.tag
+            ? (() => {
+                const tag = tags.find(t => t.id === deleteDialog.tag?.id)
+                const usageCount = tag?.usage_count || 0
+                return usageCount > 0 ? "OK" : "Delete"
+              })()
+            : "Delete"
+        }
+        cancelText={
+          deleteDialog.tag
+            ? (() => {
+                const tag = tags.find(t => t.id === deleteDialog.tag?.id)
+                const usageCount = tag?.usage_count || 0
+                return usageCount > 0 ? undefined : "Cancel"
+              })()
+            : "Cancel"
+        }
+        variant={
+          deleteDialog.tag
+            ? (() => {
+                const tag = tags.find(t => t.id === deleteDialog.tag?.id)
+                const usageCount = tag?.usage_count || 0
+                return usageCount > 0 ? "warning" : "danger"
+              })()
+            : "danger"
+        }
         isLoading={deleteTagMutation.isPending}
       />
     </div>

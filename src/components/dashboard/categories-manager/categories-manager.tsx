@@ -130,8 +130,11 @@ export default function CategoriesManager({
 
     const documentCount = deleteDialog.category.documents?.[0]?.count || 0
     
-    // If category has documents, just close the dialog (this is an info dialog)
-    if (documentCount > 0) {
+    // Check if this category has subcategories
+    const hasSubcategories = categories.some(cat => cat.parent_id === deleteDialog.category?.id)
+    
+    // If category has documents or subcategories, just close the dialog (this is an info dialog)
+    if (documentCount > 0 || hasSubcategories) {
       setDeleteDialog({ isOpen: false, category: null })
       return
     }
@@ -346,25 +349,38 @@ export default function CategoriesManager({
           deleteDialog.category
             ? (() => {
                 const documentCount = deleteDialog.category.documents?.[0]?.count || 0
-                if (documentCount > 0) {
+                const hasSubcategories = categories.some(cat => cat.parent_id === deleteDialog.category?.id)
+                const subcategoryCount = categories.filter(cat => cat.parent_id === deleteDialog.category?.id).length
+                
+                if (documentCount > 0 && hasSubcategories) {
+                  return `Cannot delete category "${deleteDialog.category.name}" because it contains ${documentCount} document(s) and has ${subcategoryCount} subcategory(ies). Please move or delete them first.`
+                } else if (documentCount > 0) {
                   return `Cannot delete category "${deleteDialog.category.name}" because it contains ${documentCount} document(s). Please move or delete the documents first.`
+                } else if (hasSubcategories) {
+                  return `Cannot delete category "${deleteDialog.category.name}" because it has ${subcategoryCount} subcategory(ies). Please move or delete the subcategories first.`
                 }
                 return `Are you sure you want to delete "${deleteDialog.category.name}"? This action cannot be undone.`
               })()
             : ""
         }
         confirmText={
-          deleteDialog.category && (deleteDialog.category.documents?.[0]?.count || 0) > 0
+          deleteDialog.category && 
+          ((deleteDialog.category.documents?.[0]?.count || 0) > 0 || 
+           categories.some(cat => cat.parent_id === deleteDialog.category?.id))
             ? "OK"
             : "Delete"
         }
         cancelText={
-          deleteDialog.category && (deleteDialog.category.documents?.[0]?.count || 0) > 0
+          deleteDialog.category && 
+          ((deleteDialog.category.documents?.[0]?.count || 0) > 0 || 
+           categories.some(cat => cat.parent_id === deleteDialog.category?.id))
             ? undefined
             : "Cancel"
         }
         variant={
-          deleteDialog.category && (deleteDialog.category.documents?.[0]?.count || 0) > 0
+          deleteDialog.category && 
+          ((deleteDialog.category.documents?.[0]?.count || 0) > 0 || 
+           categories.some(cat => cat.parent_id === deleteDialog.category?.id))
             ? "warning"
             : "danger"
         }
