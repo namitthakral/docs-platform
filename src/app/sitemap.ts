@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
+import { Database } from '@/types/database'
 import { MetadataRoute } from 'next'
 
 type DocumentSitemapEntry = {
@@ -26,7 +27,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   try {
-    const supabase = await createClient()
+    // Use public client for sitemap generation (no cookies needed)
+    const supabase = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!
+    )
     
     // Get all published documents
     const { data: documents, error } = await supabase
