@@ -7,7 +7,6 @@ import { getPublishedDocumentsByCategory } from "@/lib/data/public"
 import CategoryPageClient from "@/components/docs/category-page-client/category-page-client"
 
 type Category = Database["public"]["Tables"]["categories"]["Row"]
-type Document = Database["public"]["Tables"]["documents"]["Row"]
 
 interface CategoryPageProps {
   params: Promise<{

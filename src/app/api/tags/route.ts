@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
     // This is a known limitation - the insert operation is properly typed at runtime
     const { data: newTag, error } = await supabase
       .from('tags')
-      // @ts-ignore: Supabase type inference issue with complex queries
+      // @ts-expect-error: Supabase type inference issue with complex queries
       .insert({
         name: trimmedName,
         slug: slug

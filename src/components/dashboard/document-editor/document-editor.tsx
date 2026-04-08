@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { queryKeys } from "@/lib/query-keys"
@@ -15,7 +15,6 @@ import { documentEditorStyles } from "./document-editor.styles"
 import {
   DocumentData,
   DocumentEditorProps,
-  Category,
   FormErrors,
 } from "./document-editor.props"
 import { DocumentStatus } from "@/types/document"
@@ -282,6 +281,12 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
     saving,
     isManualSaving,
     isUserTyping,
+    lastSavedData.title,
+    lastSavedData.slug,
+    lastSavedData.description,
+    lastSavedData.status,
+    lastSavedData.category_id,
+    updateDocumentMutation,
   ])
 
   // Load localStorage backup on mount
@@ -313,7 +318,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
         }
       }
     }
-  }, [document?.id])
+  }, [document?.id, document?.updated_at])
 
   // Warn user about unsaved changes when leaving page
   useEffect(() => {
@@ -400,7 +405,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
           ...saveData,
         },
         {
-          onSuccess: (updatedDocument) => {
+          onSuccess: (_updatedDocument) => {
             setLastSaved(new Date())
             setLastSavedData(saveData)
             // Update the form data to reflect the new status

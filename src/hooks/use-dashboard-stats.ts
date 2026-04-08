@@ -1,7 +1,6 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { getRoute } from '@/config/routes'
 import type { DashboardStats } from '@/lib/data/stats'
 
 interface UseDashboardStatsOptions {

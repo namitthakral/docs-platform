@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
-import { CategoryInsert } from "@/types/category"
 
 export async function GET(request: NextRequest) {
   try {
@@ -87,6 +86,7 @@ export async function POST(request: NextRequest) {
       is_public,
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: category, error } = await (supabase.from("categories") as any)
       .insert(categoryData)
       .select(

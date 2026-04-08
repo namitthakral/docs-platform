@@ -8,10 +8,10 @@ import { getRoute } from "@/config/routes"
 import { LoginFormProps } from "./login-form.props"
 import { loginFormStyles } from "./login-form.styles"
 
-export default function LoginForm({ 
-  redirectTo = getRoute.dashboard.dashboard(),
+export default function LoginForm({
+  redirectTo = getRoute.dashboard.home(),
   onSuccess,
-  className = ""
+  className = "",
 }: LoginFormProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -43,7 +43,7 @@ export default function LoginForm({
         router.push(redirectTo)
         router.refresh()
       }
-    } catch (err) {
+    } catch (_err) {
       setError("An unexpected error occurred")
     } finally {
       setLoading(false)
@@ -53,9 +53,7 @@ export default function LoginForm({
   return (
     <div className={`${loginFormStyles.container} ${className}`}>
       <div className={loginFormStyles.header}>
-        <h2 className={loginFormStyles.title}>
-          Sign in to your account
-        </h2>
+        <h2 className={loginFormStyles.title}>Sign in to your account</h2>
         <p className={loginFormStyles.subtitle}>
           Or{" "}
           <Link
@@ -102,9 +100,7 @@ export default function LoginForm({
           </div>
         </div>
 
-        {error && (
-          <div className={loginFormStyles.errorMessage}>{error}</div>
-        )}
+        {error && <div className={loginFormStyles.errorMessage}>{error}</div>}
 
         <div className={loginFormStyles.buttonWrapper}>
           <button

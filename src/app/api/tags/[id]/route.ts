@@ -124,7 +124,7 @@ export async function PUT(
     // This is a known limitation - the update operation is properly typed at runtime
     const { data: updatedTag, error } = await supabase
       .from('tags')
-      // @ts-ignore: Supabase type inference issue with complex queries
+      // @ts-expect-error: Supabase type inference issue with complex queries
       .update({
         name: trimmedName,
         slug: slug

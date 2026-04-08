@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { FileX, Home } from "lucide-react"
+import { FileX } from "lucide-react"
 import { getRoute } from "@/config/routes"
 
 export default function NotFound() {

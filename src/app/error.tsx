@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertTriangle, RefreshCw, Home } from "lucide-react"
+import { AlertTriangle } from "lucide-react"
 import { getRoute } from "@/config/routes"
 import { useEffect } from "react"
 

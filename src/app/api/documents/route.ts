@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     }
 
     return createResponse(true, data)
-  } catch (error) {
+  } catch (_error) {
     return createResponse(false, null, "Internal server error", 500)
   }
 }
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     return createResponse(true, data, undefined, 201)
-  } catch (error) {
+  } catch (_error) {
     return createResponse(false, null, "Internal server error", 500)
   }
 }
@@ -148,7 +148,7 @@ export async function PUT(request: NextRequest) {
     }
 
     return createResponse(true, data)
-  } catch (error) {
+  } catch (_error) {
     return createResponse(false, null, "Internal server error", 500)
   }
 }
@@ -170,7 +170,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     return createResponse(true, { id })
-  } catch (error) {
+  } catch (_error) {
     return createResponse(false, null, "Internal server error", 500)
   }
 }

@@ -20,11 +20,10 @@ export async function GET(request: NextRequest) {
 
     // Search documents (including drafts) that belong to the authenticated user
     // Use unified search function for dashboard search (user's docs including drafts)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: results, error } = await (supabase as any)
       .rpc('search_documents', { 
-        search_query: query.trim(),
-        user_uuid: user.id,
-        include_drafts: true
+        search_query: query.trim()
       })
 
     if (error) {
@@ -34,6 +33,7 @@ export async function GET(request: NextRequest) {
 
 
     // Transform results to match expected format
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const searchResults = results?.map((result: any) => ({
       id: result.id,
       title: result.title,

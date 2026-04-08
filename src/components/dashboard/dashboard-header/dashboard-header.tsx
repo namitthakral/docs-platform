@@ -8,7 +8,7 @@ import { dashboardHeaderStyles } from "./dashboard-header.styles"
 import { getRoute } from "@/config/routes"
 import UnifiedSearchModal from "../../shared/unified-search-modal/unified-search-modal"
 
-export default function DashboardHeader({ user, onMobileMenuToggle }: DashboardHeaderProps) {
+export default function DashboardHeader({ onMobileMenuToggle }: DashboardHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false)
 
   // Global keyboard shortcut for search

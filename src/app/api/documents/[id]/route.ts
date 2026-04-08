@@ -80,6 +80,7 @@ export async function PUT(
     const { title, slug, content, description, category_id, status } = body
 
     const { data: document, error } = await (supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from('documents') as any)
       .update({
         title,

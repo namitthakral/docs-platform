@@ -13,12 +13,11 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     
     // Use the unified search function for public search (published docs only)
-    const { data: results, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: results, error } = await (supabase as any)
       .rpc('search_documents', { 
-        search_query: query.trim(),
-        user_uuid: null,
-        include_drafts: false
-      } as any)
+        search_query: query.trim()
+      })
 
     if (error) {
       console.error('Search error:', error)
@@ -26,7 +25,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform results to match expected format
-    const searchResults = (results as any[])?.map((result: any) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const searchResults = results?.map((result: any) => ({
       id: result.id,
       title: result.title,
       slug: result.slug,

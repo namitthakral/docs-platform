@@ -14,7 +14,7 @@ export default function TagFilter({
   onTagsChange,
 }: TagFilterProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const { tags, isLoading, isError } = useTags({ withCounts: true })
+  const { tags } = useTags({ withCounts: true })
 
   // For now, show all tags regardless of usage count
   const showAllTags = tags

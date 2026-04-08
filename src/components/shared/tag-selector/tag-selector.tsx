@@ -1,17 +1,18 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import TagInput from '../tag-input/tag-input'
-import TagList from '../tag-list/tag-list'
-import { useCreateTag } from '@/hooks/use-tag-mutations'
-import type { TagSelectorProps } from './tag-selector.props'
-import { tagSelectorStyles } from './tag-selector.styles'
+import { useState } from "react"
+import TagInput from "../tag-input/tag-input"
+import TagList from "../tag-list/tag-list"
+import { useCreateTag } from "@/hooks/use-tag-mutations"
+import type { TagSelectorProps } from "./tag-selector.props"
+import { tagSelectorStyles } from "./tag-selector.styles"
+import { Tag } from "@/types/tag"
 
-export default function TagSelector({ 
-  selectedTags, 
-  onTagsChange, 
-  placeholder = 'Add tags...', 
-  disabled = false 
+export default function TagSelector({
+  selectedTags,
+  onTagsChange,
+  placeholder = "Add tags...",
+  disabled = false,
 }: TagSelectorProps) {
   const [error, setError] = useState<string | null>(null)
   const createTagMutation = useCreateTag()
@@ -22,24 +23,25 @@ export default function TagSelector({
       const newTag = await createTagMutation.mutateAsync({ name })
       return newTag
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create tag'
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to create tag"
       setError(errorMessage)
       return null
     }
   }
 
-  const handleTagSelect = (tag: any) => {
+  const handleTagSelect = (tag: Tag) => {
     // Check if tag is already selected
-    if (selectedTags.some(selectedTag => selectedTag.id === tag.id)) {
+    if (selectedTags.some((selectedTag) => selectedTag.id === tag.id)) {
       return
     }
-    
+
     onTagsChange([...selectedTags, tag])
     setError(null)
   }
 
   const handleTagRemove = (tagId: string) => {
-    onTagsChange(selectedTags.filter(tag => tag.id !== tagId))
+    onTagsChange(selectedTags.filter((tag) => tag.id !== tagId))
   }
 
   return (
@@ -51,11 +53,7 @@ export default function TagSelector({
           placeholder={placeholder}
           disabled={disabled}
         />
-        {error && (
-          <p className={tagSelectorStyles.error}>
-            {error}
-          </p>
-        )}
+        {error && <p className={tagSelectorStyles.error}>{error}</p>}
       </div>
 
       {selectedTags.length > 0 && (

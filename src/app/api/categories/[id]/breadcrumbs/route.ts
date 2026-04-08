@@ -10,8 +10,9 @@ export async function GET(
     const supabase = await createClient()
     
     // Use the breadcrumbs function from the database
-    const { data: breadcrumbs, error } = await supabase
-      .rpc('get_category_breadcrumbs', { category_uuid: id } as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: breadcrumbs, error } = await (supabase as any)
+      .rpc('get_category_breadcrumbs', { category_uuid: id })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })

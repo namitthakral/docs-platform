@@ -62,6 +62,7 @@ export async function PUT(
     const { name, slug, description, parent_id, sort_order, is_public } = body
 
     const { data: category, error } = await (supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from('categories') as any)
       .update({
         name,

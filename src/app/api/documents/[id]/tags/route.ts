@@ -128,7 +128,7 @@ export async function PUT(
       // This is a known limitation - the insert operation is properly typed at runtime
       const { error: insertError } = await supabase
         .from('document_tags')
-        // @ts-ignore: Supabase type inference issue with complex queries
+        // @ts-expect-error: Supabase type inference issue with complex queries
         .insert(documentTagsToInsert)
       
       if (insertError) {

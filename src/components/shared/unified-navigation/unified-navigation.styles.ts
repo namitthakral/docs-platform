@@ -128,7 +128,7 @@ export function mergeNavigationStyles(
   variant: "dashboard" | "docs" | "custom",
   _customStyles?: unknown,
 ): typeof unifiedNavigationStyles {
-  const variantOverrides = variantStyles[variant] as any
+  const variantOverrides = variantStyles[variant] as Partial<typeof unifiedNavigationStyles>
 
   // Deep merge the variant overrides into base styles
   const mergedStyles = { ...baseStyles }

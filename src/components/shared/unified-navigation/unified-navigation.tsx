@@ -15,7 +15,6 @@ export default function UnifiedNavigation(props: UnifiedNavigationProps) {
     onClose,
     title,
     className,
-    styles,
     staticItems,
     user,
     showUserSection,

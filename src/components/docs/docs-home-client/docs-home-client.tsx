@@ -28,10 +28,10 @@ export default function DocsHomeClient({
     setIsLoading(true)
 
     // Filter documents that have at least one of the selected tags
-    const filtered = initialDocuments.filter((doc: any) => {
+    const filtered = initialDocuments.filter((doc) => {
       if (!doc.document_tags || doc.document_tags.length === 0) return false
 
-      const docTagIds = doc.document_tags.map((dt: any) => dt.tags.id)
+      const docTagIds = doc.document_tags.map((dt) => dt.tags.id)
       return selectedTags.some((selectedTag) =>
         docTagIds.includes(selectedTag.id),
       )
@@ -63,7 +63,7 @@ export default function DocsHomeClient({
             Browse by Category
           </h2>
           <div className={docsHomeClientStyles.categoriesGrid}>
-            {categories.map((category: any) => (
+            {categories.map((category) => (
               <Link
                 key={category.id}
                 href={getRoute.docsPage(`category/${category.slug}`)}
@@ -105,7 +105,7 @@ export default function DocsHomeClient({
           </div>
         ) : filteredDocuments && filteredDocuments.length > 0 ? (
           <div className={docsHomeClientStyles.documentsGrid}>
-            {filteredDocuments.map((doc: any) => (
+            {filteredDocuments.map((doc) => (
               <Link
                 key={doc.id}
                 href={getRoute.docsPage(doc.slug)}
@@ -125,7 +125,7 @@ export default function DocsHomeClient({
                     {/* Tags */}
                     {doc.document_tags && doc.document_tags.length > 0 && (
                       <div className={docsHomeClientStyles.documentTags}>
-                        {doc.document_tags.slice(0, 3).map((dt: any) => (
+                        {doc.document_tags.slice(0, 3).map((dt) => (
                           <span
                             key={dt.tags.id}
                             className={docsHomeClientStyles.documentTag}

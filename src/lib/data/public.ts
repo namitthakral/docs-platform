@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server"
-import { Database } from "@/types/database"
 
 type PublishedDocument = {
   id: string

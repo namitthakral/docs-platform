@@ -3,7 +3,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { DocumentStatus } from "@/types/document"
 import { DocumentData } from "@/components/dashboard/document-editor/document-editor.props"
 import { getRoute } from "@/config/routes"
 import { invalidateQueries, removeQueries } from "@/lib/query-keys"
@@ -30,7 +29,7 @@ export function useCreateDocument() {
 
       return response.json()
     },
-    onSuccess: (result) => {
+    onSuccess: (_result) => {
       // Invalidate and refetch documents list
       invalidateQueries.documents(queryClient)
       invalidateQueries.dashboardStats(queryClient)

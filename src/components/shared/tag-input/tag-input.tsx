@@ -1,26 +1,27 @@
-'use client'
+"use client"
 
-import { useState, useRef, useEffect } from 'react'
-import { Plus, Search } from 'lucide-react'
-import { useTags } from '@/hooks/use-tags'
-import type { TagInputProps } from './tag-input.props'
-import { tagInputStyles } from './tag-input.styles'
+import { useState, useRef, useEffect } from "react"
+import { Plus, Search } from "lucide-react"
+import { useTags } from "@/hooks/use-tags"
+import type { TagInputProps } from "./tag-input.props"
+import { tagInputStyles } from "./tag-input.styles"
+import { Tag } from "@/types/tag"
 
-export default function TagInput({ 
-  onTagCreate, 
-  onTagSelect, 
-  placeholder = 'Search or create tags...', 
-  disabled = false 
+export default function TagInput({
+  onTagCreate,
+  onTagSelect,
+  placeholder = "Search or create tags...",
+  disabled = false,
 }: TagInputProps) {
-  const [inputValue, setInputValue] = useState('')
+  const [inputValue, setInputValue] = useState("")
   const [isOpen, setIsOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const { tags, isLoading } = useTags({ 
+  const { tags, isLoading } = useTags({
     search: inputValue.trim(),
-    enabled: inputValue.trim().length > 0
+    enabled: inputValue.trim().length > 0,
   })
 
   // Close dropdown when clicking outside
@@ -36,8 +37,8 @@ export default function TagInput({
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   const handleInputChange = (value: string) => {
@@ -45,9 +46,9 @@ export default function TagInput({
     setIsOpen(value.trim().length > 0)
   }
 
-  const handleTagSelect = (tag: any) => {
+  const handleTagSelect = (tag: Tag) => {
     onTagSelect(tag)
-    setInputValue('')
+    setInputValue("")
     setIsOpen(false)
     inputRef.current?.focus()
   }
@@ -61,37 +62,41 @@ export default function TagInput({
       const newTag = await onTagCreate(trimmedValue)
       if (newTag) {
         onTagSelect(newTag)
-        setInputValue('')
+        setInputValue("")
         setIsOpen(false)
       }
     } catch (error) {
-      console.error('Error creating tag:', error)
+      console.error("Error creating tag:", error)
     } finally {
       setIsCreating(false)
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault()
       if (tags.length === 1) {
         handleTagSelect(tags[0])
-      } else if (inputValue.trim() && !tags.some(tag => 
-        tag.name.toLowerCase() === inputValue.trim().toLowerCase()
-      )) {
+      } else if (
+        inputValue.trim() &&
+        !tags.some(
+          (tag) => tag.name.toLowerCase() === inputValue.trim().toLowerCase(),
+        )
+      ) {
         handleCreateTag()
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setIsOpen(false)
-      setInputValue('')
+      setInputValue("")
     }
   }
 
-  const exactMatch = tags.find(tag => 
-    tag.name.toLowerCase() === inputValue.trim().toLowerCase()
+  const exactMatch = tags.find(
+    (tag) => tag.name.toLowerCase() === inputValue.trim().toLowerCase(),
   )
 
-  const showCreateOption = inputValue.trim().length > 0 && !exactMatch && !isLoading
+  const showCreateOption =
+    inputValue.trim().length > 0 && !exactMatch && !isLoading
 
   return (
     <div className={tagInputStyles.container}>
@@ -120,21 +125,20 @@ export default function TagInput({
           )}
 
           {!isLoading && tags.length === 0 && !showCreateOption && (
-            <div className={tagInputStyles.emptyItem}>
-              No tags found
-            </div>
+            <div className={tagInputStyles.emptyItem}>No tags found</div>
           )}
 
-          {!isLoading && tags.map((tag) => (
-            <button
-              key={tag.id}
-              onClick={() => handleTagSelect(tag)}
-              className={tagInputStyles.dropdownItem}
-              type="button"
-            >
-              <span className={tagInputStyles.tagName}>{tag.name}</span>
-            </button>
-          ))}
+          {!isLoading &&
+            tags.map((tag) => (
+              <button
+                key={tag.id}
+                onClick={() => handleTagSelect(tag)}
+                className={tagInputStyles.dropdownItem}
+                type="button"
+              >
+                <span className={tagInputStyles.tagName}>{tag.name}</span>
+              </button>
+            ))}
 
           {showCreateOption && (
             <button
@@ -145,7 +149,7 @@ export default function TagInput({
             >
               <Plus className={tagInputStyles.createIcon} />
               <span>
-                {isCreating ? 'Creating...' : `Create "${inputValue.trim()}"`}
+                {isCreating ? "Creating..." : `Create "${inputValue.trim()}"`}
               </span>
             </button>
           )}

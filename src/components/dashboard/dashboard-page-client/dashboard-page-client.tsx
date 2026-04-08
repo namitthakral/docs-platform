@@ -1,11 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { FileText, Edit, Plus, Check, Clipboard, BarChart3 } from "lucide-react"
+import { FileText, Edit, Plus, Check, Clipboard } from "lucide-react"
 import { useDashboardStats } from "@/hooks/use-dashboard-stats"
 import { dashboardPageClientStyles } from "./dashboard-page-client.styles"
 import { getRoute } from "@/config/routes"
-import DashboardStatsSkeleton from "@/components/dashboard/dashboard-stats-skeleton/dashboard-stats-skeleton"
 
 export default function DashboardPageClient() {
   const { stats, isLoading, isError, error } = useDashboardStats()

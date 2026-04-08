@@ -86,7 +86,7 @@ export default function UnifiedSearchModal({
 
   if (!isOpen) return null
 
-  const getResultUrl = (result: any) => {
+  const getResultUrl = (result: UnifiedSearchResult) => {
     if (mode === 'dashboard') {
       // For dashboard mode, link to the edit page
       return `/dashboard/documents/${result.id}`
@@ -139,7 +139,7 @@ export default function UnifiedSearchModal({
             {!isLoading && query.length >= 3 && results.length === 0 && (
               <div className={unifiedSearchModalStyles.emptyContainer}>
                 <p className={unifiedSearchModalStyles.emptyText}>
-                  No documents found for "{query}"
+                  No documents found for &quot;{query}&quot;
                 </p>
               </div>
             )}
