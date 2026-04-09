@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, useMemo } from "react"
+import { useEffect, useRef, useState, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -152,7 +152,7 @@ export default function DocumentEditor({
     }
   }, [watchedTitle, currentDocument, setValue])
 
-  const handleAutoSave = async () => {
+  const handleAutoSave = useCallback(async () => {
     if (!currentDocument?.id || isManualSaving || hasJustSaved) return
 
     const formData = getValues()
@@ -170,7 +170,15 @@ export default function DocumentEditor({
       return
     }
 
-    const { tags: _, ...documentData } = formData
+    // Exclude tags from auto-save (tags are not updated during auto-save)
+    const documentData = {
+      title: formData.title,
+      slug: formData.slug,
+      content: formData.content,
+      description: formData.description,
+      status: formData.status,
+      category_id: formData.category_id,
+    }
 
     try {
       await updateDocumentMutation.mutateAsync({
@@ -197,7 +205,16 @@ export default function DocumentEditor({
     } catch (error) {
       console.error("Auto-save failed:", error)
     }
-  }
+  }, [
+    currentDocument,
+    isManualSaving,
+    hasJustSaved,
+    getValues,
+    updateDocumentMutation,
+    setLastSaved,
+    setCurrentDocument,
+    reset,
+  ])
 
   // Smart auto-save functionality - only saves when there are actual changes
   useEffect(() => {
@@ -586,6 +603,7 @@ export default function DocumentEditor({
       (formData.category_id || null) !== (currentDocument.category_id || null)
 
     return !hasActualChanges
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasJustSaved, currentDocument, getValues, watchedTitle, watchedContent])
 
   return (
