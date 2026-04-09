@@ -89,13 +89,9 @@ export default function DocumentForm({
             id="slug"
             value={formData.slug}
             onChange={(e) => {
-              const processedValue = e.target.value
-                .toLowerCase()
-                .replace(/[^a-z0-9-]/g, "-")
-                .replace(/^-+|-+$/g, "") // Remove leading/trailing hyphens
-                .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
-
-              onInputChange("slug", processedValue)
+              // Let the user type freely, only do basic cleanup
+              const value = e.target.value.toLowerCase()
+              onInputChange("slug", value)
             }}
             className={
               errors.slug

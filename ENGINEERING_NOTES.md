@@ -328,6 +328,17 @@ CREATE TRIGGER create_documents_version
 - API endpoint at `/api/documents/[id]/versions` for retrieving history
 - Version number incremented automatically and displayed in UI
 
+### Document Editor Form Management
+
+The document editor uses react-hook-form with Zod validation for real-time 
+field validation, coordinated with a 10-second auto-save that:
+- Only triggers for existing documents with actual content changes
+- Is cancelled and prevented during manual saves to avoid conflicts
+- Uses derived states (isDraftSaving, isPublishing) to minimize re-renders
+
+Form state and saved document state are kept in sync after each save by 
+resetting the form with exact saved data, preventing false "unsaved changes" indicators.
+
 ### Breadcrumb Navigation
 
 Hierarchical breadcrumbs implemented with recursive SQL function:

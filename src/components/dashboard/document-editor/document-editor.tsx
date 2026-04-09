@@ -1,7 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useRef, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { useForm, useWatch } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import { useQuery } from "@tanstack/react-query"
 import { queryKeys } from "@/lib/query-keys"
 import { generateSlug } from "@/lib/helpers"
@@ -25,89 +28,85 @@ import DocumentForm from "./document-form/document-form"
 import DocumentPreview from "./document-preview/document-preview"
 import DocumentSidebar from "./document-sidebar/document-sidebar"
 
-export default function DocumentEditor({ document: initialDocument }: DocumentEditorProps) {
-  // Track the current document state (can change after creation)
-  const [currentDocument, setCurrentDocument] = useState(initialDocument)
-  
-  const [formData, setFormData] = useState<DocumentData>({
-    title: initialDocument?.title || "",
-    slug: initialDocument?.slug || "",
-    content: initialDocument?.content || "",
-    description: initialDocument?.description || "",
-    status: initialDocument?.status || DocumentStatus.DRAFT,
-    category_id: initialDocument?.category_id || null,
-    tags: [],
-  })
+// Zod schema for form validation
+const documentSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug can only contain lowercase letters, numbers, and hyphens",
+    ),
+  content: z.string().min(1, "Content is required"),
+  description: z.string(),
+  status: z.enum([DocumentStatus.DRAFT, DocumentStatus.PUBLISHED]),
+  category_id: z.string().nullable(),
+  tags: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+      created_at: z.string(),
+    }),
+  ),
+})
 
-  const [lastSaved, setLastSaved] = useState<Date | null>(
-    currentDocument?.updated_at ? new Date(currentDocument.updated_at) : null,
-  )
-  const [previewMode, setPreviewMode] = useState(false)
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [lastSavedData, setLastSavedData] = useState<DocumentData>(formData)
-  const [isManualSaving, setIsManualSaving] = useState(false)
-  const [isDraftSaving, setIsDraftSaving] = useState(false)
-  const [isPublishing, setIsPublishing] = useState(false)
-  const [isRedirecting, setIsRedirecting] = useState(false)
-  const [isUserTyping, setIsUserTyping] = useState(false)
-  const [publishedSlug, setPublishedSlug] = useState<string | null>(null)
+type DocumentFormData = z.infer<typeof documentSchema>
 
+export default function DocumentEditor({
+  document: initialDocument,
+}: DocumentEditorProps) {
   const router = useRouter()
   const autoSaveRef = useRef<NodeJS.Timeout | null>(null)
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [previewMode, setPreviewMode] = useState(false)
+  const [isManualSaving, setIsManualSaving] = useState(false)
+  const [publishedSlug, setPublishedSlug] = useState<string | null>(null)
+  const [lastSaved, setLastSaved] = useState<Date | null>(
+    initialDocument?.updated_at ? new Date(initialDocument.updated_at) : null,
+  )
+  const [hasJustSaved, setHasJustSaved] = useState(false)
 
-  const handleInputChange = (
-    field: keyof DocumentData,
-    value: string | null,
-  ) => {
-    setFormData((prev) => {
-      const newData = { ...prev, [field]: value }
+  // Track the current document state (can change after creation)
+  const [currentDocument, setCurrentDocument] = useState(initialDocument)
 
-      // Auto-generate slug from title for new documents
-      if (field === "title" && !currentDocument) {
-        const expectedSlug = prev.title ? generateSlug(prev.title) : ""
+  // Initialize form with react-hook-form
+  const form = useForm<DocumentFormData>({
+    resolver: zodResolver(documentSchema),
+    defaultValues: {
+      title: initialDocument?.title || "",
+      slug: initialDocument?.slug || "",
+      content: initialDocument?.content || "",
+      description: initialDocument?.description || "",
+      status: initialDocument?.status || DocumentStatus.DRAFT,
+      category_id: initialDocument?.category_id || null,
+      tags: [],
+    },
+    mode: "onChange",
+  })
 
-        // If slug is empty or matches what would be generated from previous title
-        if (!prev.slug || prev.slug === expectedSlug) {
-          // If title has value, generate slug; if title is empty, clear slug
-          newData.slug = value ? generateSlug(value) : ""
-        }
-      }
+  const {
+    handleSubmit,
+    setValue,
+    getValues,
+    formState: { errors, isDirty, isSubmitting },
+    reset,
+  } = form
 
-      // Save to localStorage immediately for backup
-      const backupKey = currentDocument?.id
-        ? `draft-backup-${currentDocument.id}`
-        : "draft-backup-new"
-      const backupData = { ...newData, lastModified: Date.now() }
-      localStorage.setItem(backupKey, JSON.stringify(backupData))
-
-      return newData
-    })
-
-    // Track user typing activity for content field
-    if (field === "content") {
-      setIsUserTyping(true)
-
-      // Clear existing typing timeout
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current)
-      }
-
-      // Set user as not typing after 2 seconds of inactivity
-      typingTimeoutRef.current = setTimeout(() => {
-        setIsUserTyping(false)
-      }, 2000)
+  // Convert react-hook-form errors to the expected FormErrors format
+  const formErrors: FormErrors = Object.keys(errors).reduce((acc, key) => {
+    const error = errors[key as keyof DocumentFormData]
+    if (error?.message) {
+      acc[key] = error.message
     }
+    return acc
+  }, {} as FormErrors)
 
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }))
-    }
-  }
-
-  const handleTagsChange = (tags: Tag[]) => {
-    setFormData((prev) => ({ ...prev, tags }))
-  }
+  // Watch specific fields
+  const watchedTitle = useWatch({ control: form.control, name: "title" })
+  const watchedContent = useWatch({ control: form.control, name: "content" })
+  const watchedSlug = useWatch({ control: form.control, name: "slug" })
+  const watchedStatus = useWatch({ control: form.control, name: "status" })
 
   // Mutation hooks
   const createDocumentMutation = useCreateDocument()
@@ -120,9 +119,9 @@ export default function DocumentEditor({ document: initialDocument }: DocumentEd
   // Sync document tags with form data
   useEffect(() => {
     if (documentTags.length > 0) {
-      setFormData((prev) => ({ ...prev, tags: documentTags }))
+      setValue("tags", documentTags)
     }
-  }, [documentTags])
+  }, [documentTags, setValue])
 
   // Query for categories
   const { data: categoriesResponse } = useQuery({
@@ -138,87 +137,56 @@ export default function DocumentEditor({ document: initialDocument }: DocumentEd
 
   const categories = categoriesResponse?.categories || []
 
-  // Loading and saving states from mutations
-  // Only consider it "loading" for manual saves, not auto-saves
-  const loading =
-    (createDocumentMutation.isPending || updateDocumentMutation.isPending) &&
-    isManualSaving
-  const saving = updateDocumentMutation.isPending
-
-  // Helper functions for slug management
-  const isSlugAutoGenerated = () => {
-    // If no title, consider it auto-generated only if slug is also empty
-    if (!formData.title) return !formData.slug
-    return formData.slug === generateSlug(formData.title)
-  }
-
-  const resetSlugToAutoGenerated = () => {
-    if (formData.title) {
-      setFormData((prev) => ({
-        ...prev,
-        slug: generateSlug(prev.title),
-      }))
-    }
-  }
-
-  // Categories are now loaded via React Query above
-
-  // Check if there are unsaved changes (content + metadata)
-  const hasUnsavedChanges = Boolean(
-    currentDocument?.id &&
-    (formData.title !== lastSavedData.title ||
-      formData.content !== lastSavedData.content ||
-      formData.description !== lastSavedData.description ||
-      formData.category_id !== lastSavedData.category_id ||
-      formData.slug !== lastSavedData.slug ||
-      formData.status !== lastSavedData.status),
-  )
-
-  // Check if there are content changes (excluding status) for auto-save
-  // Only auto-save content field to reduce API calls
-  const hasContentChanges = Boolean(
-    currentDocument?.id && formData.content !== lastSavedData.content,
-  )
-
-  // Check if there are significant metadata changes that should trigger manual save
-  const hasMetadataChanges = Boolean(
-    currentDocument?.id &&
-    (formData.title !== lastSavedData.title ||
-      formData.description !== lastSavedData.description ||
-      formData.category_id !== lastSavedData.category_id ||
-      formData.slug !== lastSavedData.slug),
-  )
-
-  // Initialize lastSavedData when document is loaded
+  // Auto-generate slug from title for new documents
   useEffect(() => {
-    if (currentDocument) {
-      setLastSavedData({
-        title: currentDocument.title,
-        slug: currentDocument.slug,
-        content: currentDocument.content,
-        description: currentDocument.description,
-        status: currentDocument.status,
-        category_id: currentDocument.category_id,
+    // Only for new documents (no currentDocument)
+    if (!currentDocument && watchedTitle) {
+      const expectedSlug = generateSlug(watchedTitle)
+      console.log(
+        "Auto-generating slug for new document:",
+        watchedTitle,
+        "->",
+        expectedSlug,
+      )
+
+      // For new documents, always auto-generate unless user manually edited slug
+      // We'll track manual edits with a ref or state if needed
+      setValue("slug", expectedSlug, {
+        shouldValidate: true,
+        shouldDirty: true,
       })
     }
-  }, [currentDocument])
+  }, [watchedTitle, currentDocument, setValue])
 
-  // Optimized auto-save effect with improvements:
-  // - Only auto-saves content field (not metadata) to reduce API calls
-  // - Increased debounce to 10 seconds (was 3 seconds)
-  // - Pauses auto-save while user is actively typing
-  // - Uses localStorage for immediate backup
-  // - Metadata changes require manual save
+  // Smart auto-save functionality - only saves when there are actual changes
   useEffect(() => {
-    // Only auto-save content changes, not metadata
-    // Don't auto-save if user is actively typing or during manual saves
+    // Only auto-save for existing documents (not new documents)
     if (
       !currentDocument?.id ||
-      !hasContentChanges ||
-      saving ||
+      isSubmitting ||
       isManualSaving ||
-      isUserTyping
+      hasJustSaved
     ) {
+      return
+    }
+
+    // Check if current form data actually differs from saved document
+    const formData = getValues()
+    const hasActualChanges =
+      (formData.title || "") !== (currentDocument.title || "") ||
+      (formData.slug || "") !== (currentDocument.slug || "") ||
+      (formData.content || "") !== (currentDocument.content || "") ||
+      (formData.description || "") !== (currentDocument.description || "") ||
+      formData.status !== currentDocument.status ||
+      (formData.category_id || null) !== (currentDocument.category_id || null)
+
+    // Clear hasJustSaved if there are actual changes (user made edits after saving)
+    if (hasActualChanges && hasJustSaved) {
+      setHasJustSaved(false)
+    }
+
+    // Only set up auto-save if there are actual changes
+    if (!hasActualChanges) {
       return
     }
 
@@ -227,51 +195,36 @@ export default function DocumentEditor({ document: initialDocument }: DocumentEd
       clearTimeout(autoSaveRef.current)
     }
 
-    // Set new timeout for auto-save - increased to 10 seconds to reduce API calls
+    // Auto-save after 10 seconds of inactivity
     autoSaveRef.current = setTimeout(() => {
       // Double-check conditions at execution time
       if (
-        !saving &&
+        !isSubmitting &&
         !isManualSaving &&
-        !isUserTyping &&
-        currentDocument?.id &&
-        hasContentChanges
+        !hasJustSaved &&
+        currentDocument?.id
       ) {
-        // For auto-save, only save content field to minimize API calls
-        const autoSaveData = {
-          title: lastSavedData.title, // Keep existing title
-          slug: lastSavedData.slug, // Keep existing slug
-          content: formData.content, // Only update content
-          description: lastSavedData.description, // Keep existing description
-          status: lastSavedData.status, // Keep existing status
-          category_id: lastSavedData.category_id, // Keep existing category
+        const currentFormData = getValues()
+        const stillHasChanges =
+          (currentFormData.title || "") !== (currentDocument.title || "") ||
+          (currentFormData.slug || "") !== (currentDocument.slug || "") ||
+          (currentFormData.content || "") !== (currentDocument.content || "") ||
+          (currentFormData.description || "") !==
+            (currentDocument.description || "") ||
+          currentFormData.status !== currentDocument.status ||
+          (currentFormData.category_id || null) !==
+            (currentDocument.category_id || null)
+
+        if (stillHasChanges) {
+          console.log("Auto-save triggered: actual changes detected")
+          handleAutoSave()
+        } else {
+          console.log(
+            "Auto-save skipped: no changes detected at execution time",
+          )
         }
-
-        updateDocumentMutation.mutate(
-          {
-            id: currentDocument.id,
-            ...autoSaveData,
-          },
-          {
-            onSuccess: () => {
-              setLastSaved(new Date())
-              // Only update the content in lastSavedData
-              setLastSavedData((prev) => ({
-                ...prev,
-                content: formData.content,
-              }))
-
-              // Clear localStorage backup after successful save
-              localStorage.removeItem(`draft-backup-${currentDocument.id}`)
-            },
-            onError: (error) => {
-              console.error("Auto-save error:", error)
-              // Keep localStorage backup on error
-            },
-          },
-        )
       }
-    }, 10000) // Auto-save after 10 seconds of inactivity (reduced API calls)
+    }, 10000)
 
     return () => {
       if (autoSaveRef.current) {
@@ -279,55 +232,29 @@ export default function DocumentEditor({ document: initialDocument }: DocumentEd
       }
     }
   }, [
-    hasContentChanges,
-    formData.content, // Only watch content changes for auto-save
-    currentDocument?.id,
-    saving,
+    watchedContent,
+    watchedTitle,
+    watchedSlug,
+    currentDocument,
+    isSubmitting,
     isManualSaving,
-    isUserTyping,
-    lastSavedData.title,
-    lastSavedData.slug,
-    lastSavedData.description,
-    lastSavedData.status,
-    lastSavedData.category_id,
-    updateDocumentMutation,
+    hasJustSaved,
+    getValues,
   ])
 
-  // Load localStorage backup on mount
+  // Cleanup auto-save on unmount
   useEffect(() => {
-    if (currentDocument?.id) {
-      const backupKey = `draft-backup-${currentDocument.id}`
-      const backup = localStorage.getItem(backupKey)
-
-      if (backup) {
-        try {
-          const backupData = JSON.parse(backup)
-          const backupAge = Date.now() - (backupData.lastModified || 0)
-
-          // If backup is newer than last saved and less than 1 hour old
-          if (
-            backupAge < 3600000 &&
-            backupData.lastModified >
-              (currentDocument.updated_at
-                ? new Date(currentDocument.updated_at).getTime()
-                : 0)
-          ) {
-            // Show user option to restore backup (could be implemented as a toast/modal)
-            console.log("Local backup found that is newer than saved version")
-            // For now, just log - could implement restore UI later
-          }
-        } catch (error) {
-          console.error("Error parsing backup data:", error)
-          localStorage.removeItem(backupKey)
-        }
+    return () => {
+      if (autoSaveRef.current) {
+        clearTimeout(autoSaveRef.current)
       }
     }
-  }, [currentDocument?.id, currentDocument?.updated_at])
+  }, [])
 
   // Warn user about unsaved changes when leaving page
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges && !saving && !isManualSaving) {
+      if (isDirty && !isSubmitting && !isManualSaving) {
         e.preventDefault()
         e.returnValue =
           "You have unsaved changes. Are you sure you want to leave?"
@@ -340,168 +267,390 @@ export default function DocumentEditor({ document: initialDocument }: DocumentEd
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
-  }, [hasUnsavedChanges, saving, isManualSaving])
+  }, [isDirty, isSubmitting, isManualSaving])
 
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (autoSaveRef.current) {
-        clearTimeout(autoSaveRef.current)
+  const handleAutoSave = async () => {
+    if (!currentDocument?.id || isManualSaving || hasJustSaved) return
+
+    const formData = getValues()
+
+    // Final check: only save if there are actual changes
+    const hasActualChanges =
+      (formData.title || "") !== (currentDocument.title || "") ||
+      (formData.slug || "") !== (currentDocument.slug || "") ||
+      (formData.content || "") !== (currentDocument.content || "") ||
+      (formData.description || "") !== (currentDocument.description || "") ||
+      formData.status !== currentDocument.status ||
+      (formData.category_id || null) !== (currentDocument.category_id || null)
+
+    if (!hasActualChanges) {
+      console.log("Auto-save cancelled: no actual changes detected")
+      return
+    }
+
+    const { tags, ...documentData } = formData
+
+    try {
+      await updateDocumentMutation.mutateAsync({
+        id: currentDocument.id,
+        ...documentData,
+      })
+
+      setLastSaved(new Date())
+
+      // Update currentDocument with the exact auto-saved data
+      const autoSavedDocumentData = {
+        ...currentDocument,
+        title: documentData.title,
+        slug: documentData.slug,
+        content: documentData.content,
+        description: documentData.description,
+        status: documentData.status,
+        category_id: documentData.category_id,
       }
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current)
-      }
+      setCurrentDocument(autoSavedDocumentData)
+
+      // Reset form dirty state after successful auto-save
+      reset(formData, { keepValues: true, keepDirty: false })
+
+      console.log("Auto-save completed successfully")
+    } catch (error) {
+      console.error("Auto-save failed:", error)
     }
-  }, [])
-
-  const validateForm = () => {
-    const newErrors: FormErrors = {}
-
-    if (!formData.title.trim()) {
-      newErrors.title = "Title is required"
-    }
-
-    if (!formData.slug.trim()) {
-      newErrors.slug = "Slug is required"
-    } else if (!/^[a-z0-9-]+$/.test(formData.slug)) {
-      newErrors.slug =
-        "Slug can only contain lowercase letters, numbers, and hyphens"
-    }
-
-    if (!formData.content.trim()) {
-      newErrors.content = "Content is required"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
   }
 
-  const handleSave = async (status: DocumentStatus) => {
-    if (!validateForm()) return
+  const onSubmit = async (data: DocumentFormData, status: DocumentStatus) => {
+    const { tags, ...documentData } = data
+    const saveData = { ...documentData, status }
 
-    // Cancel any pending auto-save to prevent double calls
+    // Cancel any pending auto-save
     if (autoSaveRef.current) {
       clearTimeout(autoSaveRef.current)
     }
 
-    // Set manual saving flag
     setIsManualSaving(true)
+    setHasJustSaved(true) // Immediately indicate we're saving
 
-    // Set specific loading states based on action
-    if (status === DocumentStatus.DRAFT) {
-      setIsDraftSaving(true)
-    } else if (status === DocumentStatus.PUBLISHED) {
-      setIsPublishing(true)
-    }
+    let saveSuccessful = false
 
-    // Exclude tags from document data (tags are handled separately)
-    const { tags, ...documentData } = formData
-    const saveData = {
-      ...documentData,
-      status,
-    }
-
-    if (currentDocument?.id) {
-      // Update existing document
-      updateDocumentMutation.mutate(
-        {
+    try {
+      if (currentDocument?.id) {
+        // Update existing document
+        const result = await updateDocumentMutation.mutateAsync({
           id: currentDocument.id,
           ...saveData,
-        },
-        {
-          onSuccess: () => {
-            setLastSaved(new Date())
-            setLastSavedData(saveData)
-            // Update the form data to reflect the new status
-            setFormData((prev) => ({ ...prev, status }))
+        })
 
-            // Update document tags if they have changed
-            if (tags && currentDocument?.id) {
-              const tagIds = tags.map((tag) => tag.id)
-              updateDocumentTagsMutation.mutate({
-                documentId: currentDocument.id,
-                tagIds,
-              })
-            }
+        // Update document tags
+        if (tags && tags.length > 0) {
+          const tagIds = tags.map((tag) => tag.id)
+          await updateDocumentTagsMutation.mutateAsync({
+            documentId: currentDocument.id,
+            tagIds,
+          })
+        }
 
-            setIsManualSaving(false)
-            setIsDraftSaving(false)
-            setIsPublishing(false)
+        setLastSaved(new Date())
 
-            // Clear localStorage backup after successful manual save
-            if (currentDocument?.id) {
-              localStorage.removeItem(`draft-backup-${currentDocument.id}`)
-            }
+        // Update currentDocument with the exact saved data to ensure comparison logic works
+        const updatedDocumentData = {
+          ...currentDocument,
+          title: saveData.title,
+          slug: saveData.slug,
+          content: saveData.content,
+          description: saveData.description,
+          status: saveData.status,
+          category_id: saveData.category_id,
+        }
+        setCurrentDocument(updatedDocumentData)
 
-            // Show success message for publishing (no redirect)
-            if (status === DocumentStatus.PUBLISHED) {
-              setPublishedSlug(saveData.slug)
-              // Clear the published slug after 10 seconds
-              setTimeout(() => {
-                setPublishedSlug(null)
-              }, 10000)
-            }
-          },
-          onError: (error) => {
-            console.error("Save error:", error)
-            setIsManualSaving(false)
-            setIsDraftSaving(false)
-            setIsPublishing(false)
-          },
-        },
-      )
-    } else {
-      // Create new document
-      createDocumentMutation.mutate(saveData, {
-        onSuccess: (result) => {
-          setLastSaved(new Date())
-          setLastSavedData(saveData)
-          // Update the form data to reflect the new status and ID
-          setFormData((prev) => ({ ...prev, status, id: result.data.id }))
-          
-          // CRUCIAL: Update currentDocument state with the newly created document
-          setCurrentDocument(result.data)
+        // Reset form with the EXACT saved data to ensure perfect sync
+        const formResetData = {
+          title: saveData.title,
+          slug: saveData.slug,
+          content: saveData.content,
+          description: saveData.description,
+          status: saveData.status,
+          category_id: saveData.category_id,
+          tags: data.tags, // Keep existing tags
+        }
+        reset(formResetData, { keepValues: true, keepDirty: false })
 
-          // Update document tags for the newly created document
-          if (tags && tags.length > 0) {
-            const tagIds = tags.map((tag) => tag.id)
-            updateDocumentTagsMutation.mutate({
-              documentId: result.data.id,
-              tagIds,
-            })
-          }
+        console.log("Manual save completed - form and document state synced")
+        saveSuccessful = true
 
-          setIsManualSaving(false)
-          setIsDraftSaving(false)
-          setIsPublishing(false)
+        // Show success message for publishing
+        if (status === DocumentStatus.PUBLISHED) {
+          setPublishedSlug(saveData.slug)
+          setTimeout(() => setPublishedSlug(null), 10000)
+        }
+      } else {
+        // Create new document
+        const result = await createDocumentMutation.mutateAsync(saveData)
 
-          // Clear localStorage backup after successful creation
-          localStorage.removeItem(`draft-backup-new`)
+        // Update current document state with the exact data we just saved
+        const savedDocumentData = {
+          ...result.data,
+          title: saveData.title,
+          slug: saveData.slug,
+          content: saveData.content,
+          description: saveData.description,
+          status: saveData.status,
+          category_id: saveData.category_id,
+        }
+        setCurrentDocument(savedDocumentData)
+        console.log("Updated currentDocument after create:", savedDocumentData)
 
-          // Show success message for publishing (no redirect)
-          if (status === DocumentStatus.PUBLISHED) {
-            setPublishedSlug(saveData.slug)
-            // Clear the published slug after 10 seconds
-            setTimeout(() => {
-              setPublishedSlug(null)
-            }, 10000)
-          } else {
-            // For draft documents, redirect to edit page
-            router.push(getRoute.dashboard.document(result.data.id))
-          }
-        },
-        onError: (error) => {
-          console.error("Create error:", error)
-          setIsManualSaving(false)
-          setIsDraftSaving(false)
-          setIsPublishing(false)
-        },
-      })
+        // Update document tags for newly created document
+        if (tags && tags.length > 0) {
+          const tagIds = tags.map((tag) => tag.id)
+          await updateDocumentTagsMutation.mutateAsync({
+            documentId: result.data.id,
+            tagIds,
+          })
+        }
+
+        setLastSaved(new Date())
+
+        // Reset form with the EXACT saved data to ensure perfect sync
+        const formResetData = {
+          title: saveData.title,
+          slug: saveData.slug,
+          content: saveData.content,
+          description: saveData.description,
+          status: saveData.status,
+          category_id: saveData.category_id,
+          tags: data.tags, // Keep existing tags
+        }
+        reset(formResetData, { keepValues: true, keepDirty: false })
+
+        console.log("Manual create completed - form and document state synced")
+        saveSuccessful = true
+
+        // Show success message for publishing
+        if (status === DocumentStatus.PUBLISHED) {
+          setPublishedSlug(saveData.slug)
+          setTimeout(() => setPublishedSlug(null), 10000)
+        } else {
+          // For draft documents, redirect to edit page
+          router.push(getRoute.dashboard.document(result.data.id))
+        }
+      }
+    } catch (error) {
+      console.error("Save failed:", error)
+      // Clear hasJustSaved immediately on error since we didn't actually save
+      setHasJustSaved(false)
+    } finally {
+      setIsManualSaving(false)
+
+      // Don't clear hasJustSaved with a timeout - let it be cleared when user makes changes
+      // This prevents the intermediate "unsaved changes" state
     }
   }
 
-  // Check if document is published
-  const isPublished = formData.status === DocumentStatus.PUBLISHED
+  const handleSaveDraft = () => {
+    handleSubmit((data) =>
+      onSubmit(data as DocumentFormData, DocumentStatus.DRAFT),
+    )()
+  }
+
+  const handlePublish = () => {
+    handleSubmit((data) =>
+      onSubmit(data as DocumentFormData, DocumentStatus.PUBLISHED),
+    )()
+  }
+
+  // Helper functions to work with existing components
+  const handleInputChange = (
+    field: keyof DocumentData,
+    value: string | null,
+  ) => {
+    console.log("handleInputChange:", field, "=", value)
+    setValue(field as keyof DocumentFormData, value as any, {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
+    
+    // Clear hasJustSaved when user makes changes
+    if (hasJustSaved) {
+      setHasJustSaved(false)
+    }
+  }
+
+  const handleTagsChange = (tags: Tag[]) => {
+    setValue("tags", tags, { shouldValidate: true, shouldDirty: true })
+    
+    // Clear hasJustSaved when user makes changes
+    if (hasJustSaved) {
+      setHasJustSaved(false)
+    }
+  }
+
+  const isSlugAutoGenerated = () => {
+    if (!watchedTitle) return !watchedSlug
+    return watchedSlug === generateSlug(watchedTitle)
+  }
+
+  const resetSlugToAutoGenerated = () => {
+    if (watchedTitle) {
+      setValue("slug", generateSlug(watchedTitle), { shouldValidate: true })
+    }
+  }
+
+  // Get current form data in the format expected by existing components
+  const currentFormData: DocumentData = {
+    title: watchedTitle || "",
+    slug: watchedSlug || "",
+    content: watchedContent || "",
+    description: getValues("description") || "",
+    status: watchedStatus,
+    category_id: getValues("category_id"),
+    tags: getValues("tags"),
+  }
+
+  // Computed values
+  const isPublished = watchedStatus === DocumentStatus.PUBLISHED
+  
+  // Derived loading states
+  const isDraftSaving = isManualSaving && watchedStatus === DocumentStatus.DRAFT
+  const isPublishing = isManualSaving && watchedStatus === DocumentStatus.PUBLISHED
+
+  // More robust unsaved changes calculation
+  const hasUnsavedChanges = useMemo(() => {
+    // If we just saved, no unsaved changes
+    if (hasJustSaved) {
+      return false
+    }
+
+    // For new documents, check if there's any content (even if incomplete)
+    if (!currentDocument) {
+      const formData = getValues()
+      return Boolean(
+        formData.title?.trim() ||
+        formData.content?.trim() ||
+        formData.description?.trim(),
+      )
+    }
+
+    // For existing documents, check if current form differs from saved document
+    const formData = getValues()
+    const hasChanges = (
+      (formData.title || "") !== (currentDocument.title || "") ||
+      (formData.slug || "") !== (currentDocument.slug || "") ||
+      (formData.content || "") !== (currentDocument.content || "") ||
+      (formData.description || "") !== (currentDocument.description || "") ||
+      formData.status !== currentDocument.status ||
+      (formData.category_id || null) !== (currentDocument.category_id || null)
+    )
+    
+    // Debug logging to understand what's causing the mismatch
+    if (hasChanges) {
+      console.log("Detected changes:", {
+        titleDiff: `"${formData.title || ""}" !== "${currentDocument.title || ""}"`,
+        slugDiff: `"${formData.slug || ""}" !== "${currentDocument.slug || ""}"`,
+        contentDiff: `"${(formData.content || "").substring(0, 50)}..." !== "${(currentDocument.content || "").substring(0, 50)}..."`,
+        descriptionDiff: `"${formData.description || ""}" !== "${currentDocument.description || ""}"`,
+        statusDiff: `"${formData.status}" !== "${currentDocument.status}"`,
+        categoryDiff: `"${formData.category_id || null}" !== "${currentDocument.category_id || null}"`,
+      })
+    }
+    
+    return hasChanges
+  }, [
+    hasJustSaved,
+    currentDocument,
+    getValues,
+    watchedTitle,
+    watchedContent,
+    watchedSlug,
+    watchedStatus,
+  ])
+
+  // Check if metadata fields (title, slug, description, category) have changed
+  // This requires comparing current values with initial values
+  const hasMetadataChanges = useMemo(() => {
+    if (!isDirty || hasJustSaved) return false
+
+    const currentTitle = watchedTitle || ""
+    const currentSlug = watchedSlug || ""
+    const currentDescription = getValues("description") || ""
+    const currentCategoryId = getValues("category_id")
+
+    const initialTitle = initialDocument?.title || ""
+    const initialSlug = initialDocument?.slug || ""
+    const initialDescription = initialDocument?.description || ""
+    const initialCategoryId = initialDocument?.category_id || null
+
+    return (
+      currentTitle !== initialTitle ||
+      currentSlug !== initialSlug ||
+      currentDescription !== initialDescription ||
+      currentCategoryId !== initialCategoryId
+    )
+  }, [
+    isDirty,
+    hasJustSaved,
+    watchedTitle,
+    watchedSlug,
+    getValues,
+    initialDocument,
+  ])
+  const loading =
+    (createDocumentMutation.isPending || updateDocumentMutation.isPending) &&
+    isManualSaving
+  const saving = updateDocumentMutation.isPending
+
+  // Simple button disable logic without auto-save complexity
+  const shouldDisableButtons = useMemo(() => {
+    // Always disable if we just saved
+    if (hasJustSaved) {
+      console.log("Buttons disabled: just saved")
+      return true
+    }
+
+    // For new documents, disable if missing required fields (title AND content)
+    if (!currentDocument) {
+      const formData = getValues()
+      const hasRequiredFields = Boolean(
+        formData.title?.trim() && formData.content?.trim(),
+      )
+      console.log(
+        "New document - hasRequiredFields:",
+        hasRequiredFields,
+        "shouldDisable:",
+        !hasRequiredFields,
+      )
+      return !hasRequiredFields
+    }
+
+    // For existing documents, disable if no changes from saved document
+    const formData = getValues()
+    const hasActualChanges =
+      (formData.title || "") !== (currentDocument.title || "") ||
+      (formData.slug || "") !== (currentDocument.slug || "") ||
+      (formData.content || "") !== (currentDocument.content || "") ||
+      (formData.description || "") !== (currentDocument.description || "") ||
+      formData.status !== currentDocument.status ||
+      (formData.category_id || null) !== (currentDocument.category_id || null)
+
+    console.log(
+      "Existing document - hasActualChanges:",
+      hasActualChanges,
+      "shouldDisable:",
+      !hasActualChanges,
+    )
+    if (hasActualChanges) {
+      console.log("Changes detected:", {
+        titleChanged: (formData.title || "") !== (currentDocument.title || ""),
+        slugChanged: (formData.slug || "") !== (currentDocument.slug || ""),
+        contentChanged:
+          (formData.content || "") !== (currentDocument.content || ""),
+        statusChanged: formData.status !== currentDocument.status,
+      })
+    }
+
+    return !hasActualChanges
+  }, [hasJustSaved, currentDocument, getValues, watchedTitle, watchedContent])
 
   return (
     <div className={documentEditorStyles.container}>
@@ -514,12 +663,13 @@ export default function DocumentEditor({ document: initialDocument }: DocumentEd
         loading={loading}
         isDraftSaving={isDraftSaving}
         isPublishing={isPublishing}
-        isRedirecting={isRedirecting}
         publishedSlug={publishedSlug}
         isPublished={isPublished}
+        shouldDisableButtons={shouldDisableButtons}
+        hasJustSaved={hasJustSaved}
         onTogglePreview={() => setPreviewMode(!previewMode)}
-        onSaveDraft={() => handleSave(DocumentStatus.DRAFT)}
-        onPublish={() => handleSave(DocumentStatus.PUBLISHED)}
+        onSaveDraft={handleSaveDraft}
+        onPublish={handlePublish}
       />
 
       <div className={documentEditorStyles.formGrid}>
@@ -527,21 +677,21 @@ export default function DocumentEditor({ document: initialDocument }: DocumentEd
         <div className={documentEditorStyles.mainEditor}>
           {!previewMode ? (
             <DocumentForm
-              formData={formData}
-              errors={errors}
+              formData={currentFormData}
+              errors={formErrors}
               onInputChange={handleInputChange}
               onTagsChange={handleTagsChange}
               isSlugAutoGenerated={isSlugAutoGenerated()}
               onResetSlug={resetSlugToAutoGenerated}
             />
           ) : (
-            <DocumentPreview formData={formData} />
+            <DocumentPreview formData={currentFormData} />
           )}
         </div>
 
         {/* Sidebar */}
         <DocumentSidebar
-          formData={formData}
+          formData={currentFormData}
           categories={categories}
           onInputChange={handleInputChange}
         />
