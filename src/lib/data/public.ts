@@ -77,6 +77,25 @@ export async function getPublicCategoriesWithCounts(): Promise<PublicCategoryWit
 }
 
 /**
+ * Get count of uncategorized published documents
+ */
+export async function getUncategorizedDocumentCount(): Promise<number> {
+  const supabase = await createClient()
+  
+  const { count, error } = await supabase
+    .from('documents')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'published')
+    .is('category_id', null)
+
+  if (error) {
+    throw new Error(`Failed to fetch uncategorized document count: ${error.message}`)
+  }
+
+  return count || 0
+}
+
+/**
  * Get a published document by slug with full details
  */
 export async function getPublishedDocumentBySlug(slug: string): Promise<PublishedDocumentWithDetails | null> {
@@ -230,6 +249,51 @@ export async function getAllPublishedDocuments(tagIds?: string[]): Promise<Publi
 
   if (error) {
     throw new Error(`Failed to fetch published documents: ${error.message}`)
+  }
+
+  return documents || []
+}
+
+/**
+ * Get published documents that are uncategorized
+ */
+export async function getUncategorizedPublishedDocuments(includeTags: boolean = false): Promise<PublishedDocument[]> {
+  const supabase = await createClient()
+  
+  let selectQuery = `
+    id,
+    title,
+    slug,
+    description,
+    published_at,
+    updated_at,
+    categories (
+      id,
+      name,
+      slug
+    )
+  `
+  
+  if (includeTags) {
+    selectQuery += `,
+    document_tags (
+      tags (
+        id,
+        name,
+        slug
+      )
+    )`
+  }
+  
+  const { data: documents, error } = await supabase
+    .from('documents')
+    .select(selectQuery)
+    .eq('status', 'published')
+    .is('category_id', null)
+    .order('published_at', { ascending: false })
+
+  if (error) {
+    throw new Error(`Failed to fetch uncategorized documents: ${error.message}`)
   }
 
   return documents || []

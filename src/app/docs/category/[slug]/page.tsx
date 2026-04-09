@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { Metadata } from "next"
 import { Database } from "@/types/database"
 import { Breadcrumb } from "@/types/breadcrumb"
-import { getPublishedDocumentsByCategory } from "@/lib/data/public"
+import { getPublishedDocumentsByCategory, getUncategorizedPublishedDocuments } from "@/lib/data/public"
 import CategoryPageClient from "@/components/docs/category-page-client/category-page-client"
 
 type Category = Database["public"]["Tables"]["categories"]["Row"]
@@ -18,6 +18,20 @@ export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params
+
+  // Handle special "other" category for uncategorized documents
+  if (slug === "other") {
+    return {
+      title: "Other - Documentation",
+      description: "Browse uncategorized documentation",
+      openGraph: {
+        title: "Other - Documentation",
+        description: "Browse uncategorized documentation",
+        type: "website",
+      },
+    }
+  }
+
   const supabase = await createClient()
 
   const { data: category } = (await supabase
@@ -52,6 +66,27 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   // Check authentication status on the server
   const { data: { user } } = await supabase.auth.getUser()
   const isAuthenticated = !!user
+
+  // Handle special "other" category for uncategorized documents
+  if (slug === "other") {
+    const documents = await getUncategorizedPublishedDocuments(true)
+    
+    const otherCategory = {
+      id: 'uncategorized',
+      name: 'Other',
+      description: 'Uncategorized documents',
+      slug: 'other'
+    }
+
+    return (
+      <CategoryPageClient
+        category={otherCategory}
+        initialDocuments={documents || []}
+        breadcrumbs={[]}
+        isAuthenticated={isAuthenticated}
+      />
+    )
+  }
 
   // Get category details
   const { data: category } = (await supabase

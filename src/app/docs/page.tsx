@@ -1,6 +1,7 @@
 import {
   getRecentPublishedDocuments,
   getPublicCategoriesWithCounts,
+  getUncategorizedDocumentCount,
 } from "@/lib/data/public"
 import { Metadata } from "next"
 import { createClient } from "@/lib/supabase/server"
@@ -23,15 +24,28 @@ export default async function DocsHomePage() {
   const { data: { user } } = await supabase.auth.getUser()
   const isAuthenticated = !!user
 
-  const [recentDocs, categories] = await Promise.all([
+  const [recentDocs, categories, uncategorizedCount] = await Promise.all([
     getRecentPublishedDocuments(20, true), // Get more docs with tags for filtering
     getPublicCategoriesWithCounts(),
+    getUncategorizedDocumentCount(),
   ])
+
+  // Add "Other" category if there are uncategorized documents
+  const categoriesWithOther = [...categories]
+  if (uncategorizedCount > 0) {
+    categoriesWithOther.push({
+      id: 'uncategorized',
+      name: 'Other',
+      slug: 'other',
+      description: 'Uncategorized documents',
+      documents: [{ count: uncategorizedCount }]
+    })
+  }
 
   return (
     <DocsHomeClient 
       initialDocuments={recentDocs || []} 
-      categories={categories || []} 
+      categories={categoriesWithOther || []} 
       isAuthenticated={isAuthenticated}
     />
   )

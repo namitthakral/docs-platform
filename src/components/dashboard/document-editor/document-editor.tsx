@@ -25,19 +25,22 @@ import DocumentForm from "./document-form/document-form"
 import DocumentPreview from "./document-preview/document-preview"
 import DocumentSidebar from "./document-sidebar/document-sidebar"
 
-export default function DocumentEditor({ document }: DocumentEditorProps) {
+export default function DocumentEditor({ document: initialDocument }: DocumentEditorProps) {
+  // Track the current document state (can change after creation)
+  const [currentDocument, setCurrentDocument] = useState(initialDocument)
+  
   const [formData, setFormData] = useState<DocumentData>({
-    title: document?.title || "",
-    slug: document?.slug || "",
-    content: document?.content || "",
-    description: document?.description || "",
-    status: document?.status || DocumentStatus.DRAFT,
-    category_id: document?.category_id || null,
+    title: initialDocument?.title || "",
+    slug: initialDocument?.slug || "",
+    content: initialDocument?.content || "",
+    description: initialDocument?.description || "",
+    status: initialDocument?.status || DocumentStatus.DRAFT,
+    category_id: initialDocument?.category_id || null,
     tags: [],
   })
 
   const [lastSaved, setLastSaved] = useState<Date | null>(
-    document?.updated_at ? new Date(document.updated_at) : null,
+    currentDocument?.updated_at ? new Date(currentDocument.updated_at) : null,
   )
   const [previewMode, setPreviewMode] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
@@ -61,7 +64,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
       const newData = { ...prev, [field]: value }
 
       // Auto-generate slug from title for new documents
-      if (field === "title" && !document) {
+      if (field === "title" && !currentDocument) {
         const expectedSlug = prev.title ? generateSlug(prev.title) : ""
 
         // If slug is empty or matches what would be generated from previous title
@@ -72,8 +75,8 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
       }
 
       // Save to localStorage immediately for backup
-      const backupKey = document?.id
-        ? `draft-backup-${document.id}`
+      const backupKey = currentDocument?.id
+        ? `draft-backup-${currentDocument.id}`
         : "draft-backup-new"
       const backupData = { ...newData, lastModified: Date.now() }
       localStorage.setItem(backupKey, JSON.stringify(backupData))
@@ -112,7 +115,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
   const updateDocumentTagsMutation = useUpdateDocumentTags()
 
   // Fetch document tags if editing existing document
-  const { data: documentTags = [] } = useDocumentTags(document?.id || "")
+  const { data: documentTags = [] } = useDocumentTags(currentDocument?.id || "")
 
   // Sync document tags with form data
   useEffect(() => {
@@ -162,7 +165,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
 
   // Check if there are unsaved changes (content + metadata)
   const hasUnsavedChanges = Boolean(
-    document?.id &&
+    currentDocument?.id &&
     (formData.title !== lastSavedData.title ||
       formData.content !== lastSavedData.content ||
       formData.description !== lastSavedData.description ||
@@ -174,12 +177,12 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
   // Check if there are content changes (excluding status) for auto-save
   // Only auto-save content field to reduce API calls
   const hasContentChanges = Boolean(
-    document?.id && formData.content !== lastSavedData.content,
+    currentDocument?.id && formData.content !== lastSavedData.content,
   )
 
   // Check if there are significant metadata changes that should trigger manual save
   const hasMetadataChanges = Boolean(
-    document?.id &&
+    currentDocument?.id &&
     (formData.title !== lastSavedData.title ||
       formData.description !== lastSavedData.description ||
       formData.category_id !== lastSavedData.category_id ||
@@ -188,17 +191,17 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
 
   // Initialize lastSavedData when document is loaded
   useEffect(() => {
-    if (document) {
+    if (currentDocument) {
       setLastSavedData({
-        title: document.title,
-        slug: document.slug,
-        content: document.content,
-        description: document.description,
-        status: document.status,
-        category_id: document.category_id,
+        title: currentDocument.title,
+        slug: currentDocument.slug,
+        content: currentDocument.content,
+        description: currentDocument.description,
+        status: currentDocument.status,
+        category_id: currentDocument.category_id,
       })
     }
-  }, [document])
+  }, [currentDocument])
 
   // Optimized auto-save effect with improvements:
   // - Only auto-saves content field (not metadata) to reduce API calls
@@ -210,7 +213,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
     // Only auto-save content changes, not metadata
     // Don't auto-save if user is actively typing or during manual saves
     if (
-      !document?.id ||
+      !currentDocument?.id ||
       !hasContentChanges ||
       saving ||
       isManualSaving ||
@@ -231,7 +234,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
         !saving &&
         !isManualSaving &&
         !isUserTyping &&
-        document?.id &&
+        currentDocument?.id &&
         hasContentChanges
       ) {
         // For auto-save, only save content field to minimize API calls
@@ -246,7 +249,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
 
         updateDocumentMutation.mutate(
           {
-            id: document.id,
+            id: currentDocument.id,
             ...autoSaveData,
           },
           {
@@ -259,7 +262,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
               }))
 
               // Clear localStorage backup after successful save
-              localStorage.removeItem(`draft-backup-${document.id}`)
+              localStorage.removeItem(`draft-backup-${currentDocument.id}`)
             },
             onError: (error) => {
               console.error("Auto-save error:", error)
@@ -278,7 +281,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
   }, [
     hasContentChanges,
     formData.content, // Only watch content changes for auto-save
-    document?.id,
+    currentDocument?.id,
     saving,
     isManualSaving,
     isUserTyping,
@@ -292,8 +295,8 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
 
   // Load localStorage backup on mount
   useEffect(() => {
-    if (document?.id) {
-      const backupKey = `draft-backup-${document.id}`
+    if (currentDocument?.id) {
+      const backupKey = `draft-backup-${currentDocument.id}`
       const backup = localStorage.getItem(backupKey)
 
       if (backup) {
@@ -305,8 +308,8 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
           if (
             backupAge < 3600000 &&
             backupData.lastModified >
-              (document.updated_at
-                ? new Date(document.updated_at).getTime()
+              (currentDocument.updated_at
+                ? new Date(currentDocument.updated_at).getTime()
                 : 0)
           ) {
             // Show user option to restore backup (could be implemented as a toast/modal)
@@ -319,7 +322,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
         }
       }
     }
-  }, [document?.id, document?.updated_at])
+  }, [currentDocument?.id, currentDocument?.updated_at])
 
   // Warn user about unsaved changes when leaving page
   useEffect(() => {
@@ -398,11 +401,11 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
       status,
     }
 
-    if (document?.id) {
+    if (currentDocument?.id) {
       // Update existing document
       updateDocumentMutation.mutate(
         {
-          id: document.id,
+          id: currentDocument.id,
           ...saveData,
         },
         {
@@ -413,10 +416,10 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
             setFormData((prev) => ({ ...prev, status }))
 
             // Update document tags if they have changed
-            if (tags && document?.id) {
+            if (tags && currentDocument?.id) {
               const tagIds = tags.map((tag) => tag.id)
               updateDocumentTagsMutation.mutate({
-                documentId: document.id,
+                documentId: currentDocument.id,
                 tagIds,
               })
             }
@@ -426,8 +429,8 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
             setIsPublishing(false)
 
             // Clear localStorage backup after successful manual save
-            if (document?.id) {
-              localStorage.removeItem(`draft-backup-${document.id}`)
+            if (currentDocument?.id) {
+              localStorage.removeItem(`draft-backup-${currentDocument.id}`)
             }
 
             // Show success message for publishing (no redirect)
@@ -455,6 +458,9 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
           setLastSavedData(saveData)
           // Update the form data to reflect the new status and ID
           setFormData((prev) => ({ ...prev, status, id: result.data.id }))
+          
+          // CRUCIAL: Update currentDocument state with the newly created document
+          setCurrentDocument(result.data)
 
           // Update document tags for the newly created document
           if (tags && tags.length > 0) {
@@ -494,6 +500,9 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
     }
   }
 
+  // Check if document is published
+  const isPublished = formData.status === DocumentStatus.PUBLISHED
+
   return (
     <div className={documentEditorStyles.container}>
       <DocumentEditorHeader
@@ -507,6 +516,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
         isPublishing={isPublishing}
         isRedirecting={isRedirecting}
         publishedSlug={publishedSlug}
+        isPublished={isPublished}
         onTogglePreview={() => setPreviewMode(!previewMode)}
         onSaveDraft={() => handleSave(DocumentStatus.DRAFT)}
         onPublish={() => handleSave(DocumentStatus.PUBLISHED)}

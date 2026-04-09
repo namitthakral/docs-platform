@@ -16,6 +16,7 @@ export default function DocumentEditorHeader({
   isPublishing,
   isRedirecting = false,
   publishedSlug,
+  isPublished,
   onTogglePreview,
   onSaveDraft,
   onPublish,
@@ -107,7 +108,7 @@ export default function DocumentEditorHeader({
           </button>
           <button
             onClick={onPublish}
-            disabled={isDraftSaving || isPublishing || isRedirecting}
+            disabled={isDraftSaving || isPublishing || isRedirecting || (isPublished && !hasUnsavedChanges)}
             className={documentEditorHeaderStyles.publishButton}
           >
             {isPublishing ? (
@@ -115,7 +116,7 @@ export default function DocumentEditorHeader({
                 <div
                   className={documentEditorHeaderStyles.publishLoadingSpinner}
                 />
-                <span>Publishing...</span>
+                <span>{isPublished ? "Updating..." : "Publishing..."}</span>
               </div>
             ) : isRedirecting ? (
               <div className={documentEditorHeaderStyles.publishButtonLoading}>
@@ -125,7 +126,7 @@ export default function DocumentEditorHeader({
                 <span>Redirecting...</span>
               </div>
             ) : (
-              "Publish"
+              isPublished && hasUnsavedChanges ? "Update" : "Publish"
             )}
           </button>
         </div>
