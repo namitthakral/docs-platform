@@ -85,7 +85,9 @@ Try out the live application to see all features in action!
 |----------|-------------|----------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` | Supabase publishable/anon key for client-side operations | Yes |
-| `NEXT_PUBLIC_SITE_URL` | Base URL for sitemap and robots.txt generation | No |
+| `NEXT_PUBLIC_SITE_URL` | Base URL for sitemap and robots.txt generation (required for production SEO) | Yes* |
+
+*Required for production deployment to ensure proper SEO and URL generation. Defaults to `localhost:3000` in development.
 
 ## Project Structure
 
