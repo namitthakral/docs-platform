@@ -21,10 +21,10 @@ export const documentsPageClientStyles = {
   errorMessage: "text-sm text-gray-600 mt-1",
 
   // Empty state
-  emptyContainer: "flex flex-col items-center justify-center py-12",
-  emptyIcon: "w-12 h-12 text-gray-400 mb-4",
-  emptyTitle: "text-lg font-medium text-gray-900 mb-2",
-  emptyDescription: "text-gray-500 text-center mb-4",
+  emptyContainer: "flex flex-col items-center justify-center p-12 text-center",
+  emptyIcon: "w-12 h-12 text-muted-foreground mb-4",
+  emptyTitle: "text-lg font-medium text-foreground mb-2",
+  emptyDescription: "text-muted-foreground max-w-sm",
   emptyButton:
     "inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors",
 

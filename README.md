@@ -34,60 +34,87 @@ Try out the live application to see all features in action!
 
 ## Prerequisites
 
-- Node.js 20+ 
+- Node.js 20+
 - npm or yarn
 - Supabase account and project
 
 ## Installation & Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd docs-platform
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
-3. **Set up environment variables**
+3. **Create a new Supabase project**
+
+   a. Go to [https://supabase.com](https://supabase.com) and sign in to your account
+
+   b. Click "New Project" in your dashboard
+
+   c. Fill in the project details:
+   - **Name**: Choose a name for your project (e.g., "docs-platform")
+   - **Database Password**: Create a strong password and save it securely
+   - **Region**: Select the region closest to your location for better performance
+   - **Pricing Plan**: Choose your preferred plan (Free tier works for development)
+
+   d. **Important**: Check the "Enable Row Level Security (RLS)" checkbox before creating the project
+
+   e. Click "Create new project" and wait for the setup to complete (usually takes 1-2 minutes)
+
+   f. Once created, go to **Settings > API** to find your project credentials:
+   - Project URL
+
+4. **Set up environment variables**
+
    ```bash
    cp .env.example .env.local
    ```
-   
+
    Fill in your Supabase credentials:
+
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your_supabase_publishable_key
    NEXT_PUBLIC_SITE_URL=http://localhost:3000
    ```
 
-4. **Set up the database**
-   
-   Run the SQL schema in your Supabase project:
-   ```bash
-   # Copy the contents of supabase-schema.sql and run in Supabase SQL Editor
-   ```
+5. **Set up the database schema**
 
-5. **Run the development server**
+   a. In your Supabase project dashboard, navigate to **SQL Editor**
+
+   b. Copy the contents of `supabase-schema.sql` from this repository
+
+   c. Paste the SQL into the Supabase SQL Editor and click "Run" to create all necessary tables, functions, and RLS policies
+
+   d. Verify the setup by checking the **Table Editor** - you should see tables like `documents`, `categories`, `tags`, etc.
+
+6. **Run the development server**
+
    ```bash
    npm run dev
    ```
 
-6. **Open your browser**
-   
+7. **Open your browser**
+
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` | Supabase publishable/anon key for client-side operations | Yes |
-| `NEXT_PUBLIC_SITE_URL` | Base URL for sitemap and robots.txt generation (required for production SEO) | Yes* |
+| Variable                                       | Description                                                                  | Required |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- | -------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                     | Your Supabase project URL                                                    | Yes      |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` | Supabase publishable/anon key for client-side operations                     | Yes      |
+| `NEXT_PUBLIC_SITE_URL`                         | Base URL for sitemap and robots.txt generation (required for production SEO) | Yes\*    |
 
-*Required for production deployment to ensure proper SEO and URL generation. Defaults to `localhost:3000` in development.
+\*Required for production deployment to ensure proper SEO and URL generation. Defaults to `localhost:3000` in development.
 
 ## Project Structure
 
@@ -133,16 +160,17 @@ src/
 
 ## Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start development server on port 3000 |
-| `npm run build` | Build the application for production |
-| `npm start` | Start production server |
-| `npm run lint` | Run ESLint for code quality checks |
+| Script          | Description                           |
+| --------------- | ------------------------------------- |
+| `npm run dev`   | Start development server on port 3000 |
+| `npm run build` | Build the application for production  |
+| `npm start`     | Start production server               |
+| `npm run lint`  | Run ESLint for code quality checks    |
 
 ## API Reference
 
 ### Documents
+
 - `GET /api/documents` - List documents with filtering (status, categoryId, limit)
 - `POST /api/documents` - Create new document
 - `PUT /api/documents?id=:id` - Update document by ID
@@ -152,6 +180,7 @@ src/
 - `DELETE /api/documents/[id]/tags` - Remove tags from document
 
 ### Categories
+
 - `GET /api/categories` - List all categories with hierarchy
 - `POST /api/categories` - Create new category
 - `PUT /api/categories/[id]` - Update category
@@ -159,16 +188,19 @@ src/
 - `GET /api/categories/[id]/breadcrumbs` - Get category breadcrumb trail
 
 ### Tags
+
 - `GET /api/tags` - List all tags
 - `POST /api/tags` - Create new tag
 - `PUT /api/tags/[id]` - Update tag
 - `DELETE /api/tags/[id]` - Delete tag
 
 ### Search
+
 - `GET /api/search` - Public search (published documents only)
 - `GET /api/dashboard/search` - Authenticated search (includes drafts)
 
 ### Dashboard
+
 - `GET /api/dashboard/stats` - Dashboard statistics and metrics
 - `GET /api/navigation/documents` - Published documents for navigation
 

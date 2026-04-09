@@ -98,13 +98,6 @@ export default function DocumentsPageClient() {
           <p className={documentsPageClientStyles.emptyDescription}>
             Get started by creating your first document.
           </p>
-          <Link
-            href={getRoute.dashboard.documentsNew()}
-            className={documentsPageClientStyles.emptyButton}
-          >
-            <Plus className={documentsPageClientStyles.createIcon} />
-            Create Document
-          </Link>
         </div>
       ) : (
         <div className={documentsPageClientStyles.container}>

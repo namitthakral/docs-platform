@@ -13,7 +13,7 @@ export const tagManagerStyles = {
   
   // Mobile header
   mobileHeader: 'md:hidden space-y-4',
-  mobileCreateButton: 'w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-md hover:bg-primary/90 transition-colors cursor-pointer',
+  mobileCreateButton: 'w-full inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors cursor-pointer',
   
   // Header section
   header: 'flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between',
@@ -26,7 +26,7 @@ export const tagManagerStyles = {
   searchInput: 'w-full pl-10 pr-4 py-2 border border-border rounded-md focus:ring-2 focus:ring-ring focus:border-transparent transition-colors text-foreground bg-input',
   
   // Action buttons
-  createButton: 'inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer',
+  createButton: 'inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer',
   createIcon: 'w-4 h-4',
   
   // Error handling
@@ -54,7 +54,7 @@ export const tagManagerStyles = {
   emptyDescription: 'text-muted-foreground max-w-sm',
   
   // Tags list
-  tagsList: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4',
+  tagsList: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-4',
   tagItem: 'bg-card border border-border rounded-lg p-4 hover:border-border/80 transition-colors',
   tagContent: 'flex items-center justify-between',
   
@@ -75,7 +75,7 @@ export const tagManagerStyles = {
   editActions: 'flex gap-2',
   
   // Action buttons
-  saveButton: 'inline-flex items-center px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer',
+  saveButton: 'inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer',
   cancelButton: 'inline-flex items-center px-4 py-2 bg-muted text-foreground text-sm font-medium rounded-md hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring transition-colors cursor-pointer',
   editButton: 'inline-flex items-center justify-center w-8 h-8 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-md transition-colors cursor-pointer',
   deleteButton: 'inline-flex items-center justify-center w-8 h-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer',

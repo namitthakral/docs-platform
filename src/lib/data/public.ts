@@ -1,33 +1,10 @@
 import { createClient } from "@/lib/supabase/server"
-
-type PublishedDocument = {
-  id: string
-  title: string
-  slug: string
-  description: string | null
-  published_at: string | null
-  updated_at: string
-  categories: {
-    id: string
-    name: string
-    slug: string
-  } | null
-  document_tags?: Array<{
-    tags: {
-      id: string
-      name: string
-      slug: string
-    }
-  }>
-}
-
-type CategoryWithDocumentCount = {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  documents: Array<{ count: number }>
-}
+import type {
+  PublishedDocument,
+  PublicCategoryWithDocumentCount,
+  PublishedDocumentWithDetails,
+  DocumentMetadata
+} from "@/types/public"
 
 /**
  * Get recent published documents for public docs homepage
@@ -77,7 +54,7 @@ export async function getRecentPublishedDocuments(limit: number = 6, includeTags
 /**
  * Get categories with document counts for public display
  */
-export async function getPublicCategoriesWithCounts(): Promise<CategoryWithDocumentCount[]> {
+export async function getPublicCategoriesWithCounts(): Promise<PublicCategoryWithDocumentCount[]> {
   const supabase = await createClient()
   
   const { data: categories, error } = await supabase
@@ -97,35 +74,6 @@ export async function getPublicCategoriesWithCounts(): Promise<CategoryWithDocum
   }
 
   return categories || []
-}
-
-type PublishedDocumentWithDetails = {
-  id: string
-  title: string
-  content: string
-  description: string | null
-  published_at: string | null
-  updated_at: string
-  categories: {
-    id: string
-    name: string
-    slug: string
-  } | null
-  document_tags: Array<{
-    tags: {
-      id: string
-      name: string
-    }
-  }>
-}
-
-type DocumentMetadata = {
-  title: string
-  description: string | null
-  content: string
-  categories: {
-    name: string
-  } | null
 }
 
 /**
