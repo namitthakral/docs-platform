@@ -142,12 +142,6 @@ export default function DocumentEditor({
     // Only for new documents (no currentDocument)
     if (!currentDocument && watchedTitle) {
       const expectedSlug = generateSlug(watchedTitle)
-      console.log(
-        "Auto-generating slug for new document:",
-        watchedTitle,
-        "->",
-        expectedSlug,
-      )
 
       // For new documents, always auto-generate unless user manually edited slug
       // We'll track manual edits with a ref or state if needed
@@ -157,6 +151,53 @@ export default function DocumentEditor({
       })
     }
   }, [watchedTitle, currentDocument, setValue])
+
+  const handleAutoSave = async () => {
+    if (!currentDocument?.id || isManualSaving || hasJustSaved) return
+
+    const formData = getValues()
+
+    // Final check: only save if there are actual changes
+    const hasActualChanges =
+      (formData.title || "") !== (currentDocument.title || "") ||
+      (formData.slug || "") !== (currentDocument.slug || "") ||
+      (formData.content || "") !== (currentDocument.content || "") ||
+      (formData.description || "") !== (currentDocument.description || "") ||
+      formData.status !== currentDocument.status ||
+      (formData.category_id || null) !== (currentDocument.category_id || null)
+
+    if (!hasActualChanges) {
+      return
+    }
+
+    const { tags: _, ...documentData } = formData
+
+    try {
+      await updateDocumentMutation.mutateAsync({
+        id: currentDocument.id,
+        ...documentData,
+      })
+
+      setLastSaved(new Date())
+
+      // Update currentDocument with the exact auto-saved data
+      const autoSavedDocumentData = {
+        ...currentDocument,
+        title: documentData.title,
+        slug: documentData.slug,
+        content: documentData.content,
+        description: documentData.description,
+        status: documentData.status,
+        category_id: documentData.category_id,
+      }
+      setCurrentDocument(autoSavedDocumentData)
+
+      // Reset form dirty state after successful auto-save
+      reset(formData, { keepValues: true, keepDirty: false })
+    } catch (error) {
+      console.error("Auto-save failed:", error)
+    }
+  }
 
   // Smart auto-save functionality - only saves when there are actual changes
   useEffect(() => {
@@ -216,12 +257,7 @@ export default function DocumentEditor({
             (currentDocument.category_id || null)
 
         if (stillHasChanges) {
-          console.log("Auto-save triggered: actual changes detected")
           handleAutoSave()
-        } else {
-          console.log(
-            "Auto-save skipped: no changes detected at execution time",
-          )
         }
       }
     }, 10000)
@@ -240,6 +276,7 @@ export default function DocumentEditor({
     isManualSaving,
     hasJustSaved,
     getValues,
+    handleAutoSave,
   ])
 
   // Cleanup auto-save on unmount
@@ -269,56 +306,6 @@ export default function DocumentEditor({
     }
   }, [isDirty, isSubmitting, isManualSaving])
 
-  const handleAutoSave = async () => {
-    if (!currentDocument?.id || isManualSaving || hasJustSaved) return
-
-    const formData = getValues()
-
-    // Final check: only save if there are actual changes
-    const hasActualChanges =
-      (formData.title || "") !== (currentDocument.title || "") ||
-      (formData.slug || "") !== (currentDocument.slug || "") ||
-      (formData.content || "") !== (currentDocument.content || "") ||
-      (formData.description || "") !== (currentDocument.description || "") ||
-      formData.status !== currentDocument.status ||
-      (formData.category_id || null) !== (currentDocument.category_id || null)
-
-    if (!hasActualChanges) {
-      console.log("Auto-save cancelled: no actual changes detected")
-      return
-    }
-
-    const { tags, ...documentData } = formData
-
-    try {
-      await updateDocumentMutation.mutateAsync({
-        id: currentDocument.id,
-        ...documentData,
-      })
-
-      setLastSaved(new Date())
-
-      // Update currentDocument with the exact auto-saved data
-      const autoSavedDocumentData = {
-        ...currentDocument,
-        title: documentData.title,
-        slug: documentData.slug,
-        content: documentData.content,
-        description: documentData.description,
-        status: documentData.status,
-        category_id: documentData.category_id,
-      }
-      setCurrentDocument(autoSavedDocumentData)
-
-      // Reset form dirty state after successful auto-save
-      reset(formData, { keepValues: true, keepDirty: false })
-
-      console.log("Auto-save completed successfully")
-    } catch (error) {
-      console.error("Auto-save failed:", error)
-    }
-  }
-
   const onSubmit = async (data: DocumentFormData, status: DocumentStatus) => {
     const { tags, ...documentData } = data
     const saveData = { ...documentData, status }
@@ -331,12 +318,10 @@ export default function DocumentEditor({
     setIsManualSaving(true)
     setHasJustSaved(true) // Immediately indicate we're saving
 
-    let saveSuccessful = false
-
     try {
       if (currentDocument?.id) {
         // Update existing document
-        const result = await updateDocumentMutation.mutateAsync({
+        await updateDocumentMutation.mutateAsync({
           id: currentDocument.id,
           ...saveData,
         })
@@ -376,9 +361,6 @@ export default function DocumentEditor({
         }
         reset(formResetData, { keepValues: true, keepDirty: false })
 
-        console.log("Manual save completed - form and document state synced")
-        saveSuccessful = true
-
         // Show success message for publishing
         if (status === DocumentStatus.PUBLISHED) {
           setPublishedSlug(saveData.slug)
@@ -399,7 +381,6 @@ export default function DocumentEditor({
           category_id: saveData.category_id,
         }
         setCurrentDocument(savedDocumentData)
-        console.log("Updated currentDocument after create:", savedDocumentData)
 
         // Update document tags for newly created document
         if (tags && tags.length > 0) {
@@ -423,9 +404,6 @@ export default function DocumentEditor({
           tags: data.tags, // Keep existing tags
         }
         reset(formResetData, { keepValues: true, keepDirty: false })
-
-        console.log("Manual create completed - form and document state synced")
-        saveSuccessful = true
 
         // Show success message for publishing
         if (status === DocumentStatus.PUBLISHED) {
@@ -465,12 +443,11 @@ export default function DocumentEditor({
     field: keyof DocumentData,
     value: string | null,
   ) => {
-    console.log("handleInputChange:", field, "=", value)
-    setValue(field as keyof DocumentFormData, value as any, {
+    setValue(field as keyof DocumentFormData, value as string | null, {
       shouldValidate: true,
       shouldDirty: true,
     })
-    
+
     // Clear hasJustSaved when user makes changes
     if (hasJustSaved) {
       setHasJustSaved(false)
@@ -479,7 +456,7 @@ export default function DocumentEditor({
 
   const handleTagsChange = (tags: Tag[]) => {
     setValue("tags", tags, { shouldValidate: true, shouldDirty: true })
-    
+
     // Clear hasJustSaved when user makes changes
     if (hasJustSaved) {
       setHasJustSaved(false)
@@ -510,10 +487,11 @@ export default function DocumentEditor({
 
   // Computed values
   const isPublished = watchedStatus === DocumentStatus.PUBLISHED
-  
+
   // Derived loading states
   const isDraftSaving = isManualSaving && watchedStatus === DocumentStatus.DRAFT
-  const isPublishing = isManualSaving && watchedStatus === DocumentStatus.PUBLISHED
+  const isPublishing =
+    isManualSaving && watchedStatus === DocumentStatus.PUBLISHED
 
   // More robust unsaved changes calculation
   const hasUnsavedChanges = useMemo(() => {
@@ -534,37 +512,16 @@ export default function DocumentEditor({
 
     // For existing documents, check if current form differs from saved document
     const formData = getValues()
-    const hasChanges = (
+    const hasChanges =
       (formData.title || "") !== (currentDocument.title || "") ||
       (formData.slug || "") !== (currentDocument.slug || "") ||
       (formData.content || "") !== (currentDocument.content || "") ||
       (formData.description || "") !== (currentDocument.description || "") ||
       formData.status !== currentDocument.status ||
       (formData.category_id || null) !== (currentDocument.category_id || null)
-    )
-    
-    // Debug logging to understand what's causing the mismatch
-    if (hasChanges) {
-      console.log("Detected changes:", {
-        titleDiff: `"${formData.title || ""}" !== "${currentDocument.title || ""}"`,
-        slugDiff: `"${formData.slug || ""}" !== "${currentDocument.slug || ""}"`,
-        contentDiff: `"${(formData.content || "").substring(0, 50)}..." !== "${(currentDocument.content || "").substring(0, 50)}..."`,
-        descriptionDiff: `"${formData.description || ""}" !== "${currentDocument.description || ""}"`,
-        statusDiff: `"${formData.status}" !== "${currentDocument.status}"`,
-        categoryDiff: `"${formData.category_id || null}" !== "${currentDocument.category_id || null}"`,
-      })
-    }
-    
+
     return hasChanges
-  }, [
-    hasJustSaved,
-    currentDocument,
-    getValues,
-    watchedTitle,
-    watchedContent,
-    watchedSlug,
-    watchedStatus,
-  ])
+  }, [hasJustSaved, currentDocument, getValues])
 
   // Check if metadata fields (title, slug, description, category) have changed
   // This requires comparing current values with initial values
@@ -595,16 +552,17 @@ export default function DocumentEditor({
     getValues,
     initialDocument,
   ])
+
   const loading =
     (createDocumentMutation.isPending || updateDocumentMutation.isPending) &&
     isManualSaving
+
   const saving = updateDocumentMutation.isPending
 
   // Simple button disable logic without auto-save complexity
   const shouldDisableButtons = useMemo(() => {
     // Always disable if we just saved
     if (hasJustSaved) {
-      console.log("Buttons disabled: just saved")
       return true
     }
 
@@ -613,12 +571,6 @@ export default function DocumentEditor({
       const formData = getValues()
       const hasRequiredFields = Boolean(
         formData.title?.trim() && formData.content?.trim(),
-      )
-      console.log(
-        "New document - hasRequiredFields:",
-        hasRequiredFields,
-        "shouldDisable:",
-        !hasRequiredFields,
       )
       return !hasRequiredFields
     }
@@ -632,22 +584,6 @@ export default function DocumentEditor({
       (formData.description || "") !== (currentDocument.description || "") ||
       formData.status !== currentDocument.status ||
       (formData.category_id || null) !== (currentDocument.category_id || null)
-
-    console.log(
-      "Existing document - hasActualChanges:",
-      hasActualChanges,
-      "shouldDisable:",
-      !hasActualChanges,
-    )
-    if (hasActualChanges) {
-      console.log("Changes detected:", {
-        titleChanged: (formData.title || "") !== (currentDocument.title || ""),
-        slugChanged: (formData.slug || "") !== (currentDocument.slug || ""),
-        contentChanged:
-          (formData.content || "") !== (currentDocument.content || ""),
-        statusChanged: formData.status !== currentDocument.status,
-      })
-    }
 
     return !hasActualChanges
   }, [hasJustSaved, currentDocument, getValues, watchedTitle, watchedContent])
