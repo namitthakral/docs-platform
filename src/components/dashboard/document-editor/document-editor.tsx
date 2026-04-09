@@ -47,6 +47,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
   const [isPublishing, setIsPublishing] = useState(false)
   const [isRedirecting, setIsRedirecting] = useState(false)
   const [isUserTyping, setIsUserTyping] = useState(false)
+  const [publishedSlug, setPublishedSlug] = useState<string | null>(null)
 
   const router = useRouter()
   const autoSaveRef = useRef<NodeJS.Timeout | null>(null)
@@ -102,21 +103,21 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
   }
 
   const handleTagsChange = (tags: Tag[]) => {
-    setFormData(prev => ({ ...prev, tags }))
+    setFormData((prev) => ({ ...prev, tags }))
   }
 
   // Mutation hooks
   const createDocumentMutation = useCreateDocument()
   const updateDocumentMutation = useUpdateDocument()
   const updateDocumentTagsMutation = useUpdateDocumentTags()
-  
+
   // Fetch document tags if editing existing document
-  const { data: documentTags = [] } = useDocumentTags(document?.id || '')
+  const { data: documentTags = [] } = useDocumentTags(document?.id || "")
 
   // Sync document tags with form data
   useEffect(() => {
     if (documentTags.length > 0) {
-      setFormData(prev => ({ ...prev, tags: documentTags }))
+      setFormData((prev) => ({ ...prev, tags: documentTags }))
     }
   }, [documentTags])
 
@@ -382,7 +383,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
 
     // Set manual saving flag
     setIsManualSaving(true)
-    
+
     // Set specific loading states based on action
     if (status === DocumentStatus.DRAFT) {
       setIsDraftSaving(true)
@@ -413,10 +414,10 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
 
             // Update document tags if they have changed
             if (tags && document?.id) {
-              const tagIds = tags.map(tag => tag.id)
+              const tagIds = tags.map((tag) => tag.id)
               updateDocumentTagsMutation.mutate({
                 documentId: document.id,
-                tagIds
+                tagIds,
               })
             }
 
@@ -429,14 +430,13 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
               localStorage.removeItem(`draft-backup-${document.id}`)
             }
 
-            // Redirect to the published document if publishing
+            // Show success message for publishing (no redirect)
             if (status === DocumentStatus.PUBLISHED) {
-              const publicUrl = getRoute.docsPage(saveData.slug)
-              setIsRedirecting(true)
-              // Small delay to show the success state before redirecting
+              setPublishedSlug(saveData.slug)
+              // Clear the published slug after 10 seconds
               setTimeout(() => {
-                router.push(publicUrl)
-              }, 1000)
+                setPublishedSlug(null)
+              }, 10000)
             }
           },
           onError: (error) => {
@@ -458,10 +458,10 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
 
           // Update document tags for the newly created document
           if (tags && tags.length > 0) {
-            const tagIds = tags.map(tag => tag.id)
+            const tagIds = tags.map((tag) => tag.id)
             updateDocumentTagsMutation.mutate({
               documentId: result.data.id,
-              tagIds
+              tagIds,
             })
           }
 
@@ -472,14 +472,13 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
           // Clear localStorage backup after successful creation
           localStorage.removeItem(`draft-backup-new`)
 
-          // Redirect to the published document if publishing
+          // Show success message for publishing (no redirect)
           if (status === DocumentStatus.PUBLISHED) {
-            const publicUrl = getRoute.docsPage(saveData.slug)
-            setIsRedirecting(true)
-            // Small delay to show the success state before redirecting
+            setPublishedSlug(saveData.slug)
+            // Clear the published slug after 10 seconds
             setTimeout(() => {
-              router.push(publicUrl)
-            }, 1000)
+              setPublishedSlug(null)
+            }, 10000)
           } else {
             // For draft documents, redirect to edit page
             router.push(getRoute.dashboard.document(result.data.id))
@@ -507,6 +506,7 @@ export default function DocumentEditor({ document }: DocumentEditorProps) {
         isDraftSaving={isDraftSaving}
         isPublishing={isPublishing}
         isRedirecting={isRedirecting}
+        publishedSlug={publishedSlug}
         onTogglePreview={() => setPreviewMode(!previewMode)}
         onSaveDraft={() => handleSave(DocumentStatus.DRAFT)}
         onPublish={() => handleSave(DocumentStatus.PUBLISHED)}

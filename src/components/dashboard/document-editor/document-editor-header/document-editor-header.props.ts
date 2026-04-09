@@ -8,6 +8,7 @@ export interface DocumentEditorHeaderProps {
   isDraftSaving: boolean
   isPublishing: boolean
   isRedirecting?: boolean
+  publishedSlug?: string | null
   onTogglePreview: () => void
   onSaveDraft: () => void
   onPublish: () => void

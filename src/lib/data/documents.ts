@@ -94,7 +94,7 @@ export async function getDocumentById(id: string): Promise<DocumentEditorData | 
 /**
  * Get documents by status
  */
-export async function getDocumentsByStatus(status: 'draft' | 'published' | 'archived'): Promise<DocumentTableRow[]> {
+export async function getDocumentsByStatus(status: 'draft' | 'published'): Promise<DocumentTableRow[]> {
   const supabase = await createClient()
   
   const { data: documents, error } = await supabase

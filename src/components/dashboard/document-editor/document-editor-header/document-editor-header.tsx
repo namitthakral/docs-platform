@@ -1,6 +1,8 @@
 "use client"
 
-import { Eye, Edit } from "lucide-react"
+import { Eye, Edit, ExternalLink, CheckCircle } from "lucide-react"
+import Link from "next/link"
+import { getRoute } from "@/config/routes"
 import { documentEditorHeaderStyles } from "./document-editor-header.styles"
 import type { DocumentEditorHeaderProps } from "./document-editor-header.props"
 
@@ -13,6 +15,7 @@ export default function DocumentEditorHeader({
   isDraftSaving,
   isPublishing,
   isRedirecting = false,
+  publishedSlug,
   onTogglePreview,
   onSaveDraft,
   onPublish,
@@ -30,12 +33,21 @@ export default function DocumentEditorHeader({
                 </span>
               </>
             )}
-            {isRedirecting && (
+            {publishedSlug && (
               <>
-                <div className={documentEditorHeaderStyles.savingIndicator} />
+                <CheckCircle className="w-4 h-4 text-green-500" />
                 <span className={documentEditorHeaderStyles.saveText}>
-                  Published! Redirecting to document...
+                  Published successfully!
                 </span>
+                <Link 
+                  href={getRoute.docsPage(publishedSlug)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-sm text-blue-500 hover:text-blue-600 ml-2"
+                >
+                  View document
+                  <ExternalLink className="w-3 h-3 ml-1" />
+                </Link>
               </>
             )}
             {!saving && !isRedirecting && hasUnsavedChanges && (

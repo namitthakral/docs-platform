@@ -4,7 +4,6 @@ export interface DashboardStats {
   totalDocs: number
   publishedDocs: number
   draftDocs: number
-  archivedDocs: number
   totalCategories: number
   totalTags: number
 }
@@ -19,14 +18,12 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     { count: totalDocs },
     { count: publishedDocs },
     { count: draftDocs },
-    { count: archivedDocs },
     { count: totalCategories },
     { count: totalTags }
   ] = await Promise.all([
     supabase.from('documents').select('*', { count: 'exact', head: true }),
     supabase.from('documents').select('*', { count: 'exact', head: true }).eq('status', 'published'),
     supabase.from('documents').select('*', { count: 'exact', head: true }).eq('status', 'draft'),
-    supabase.from('documents').select('*', { count: 'exact', head: true }).eq('status', 'archived'),
     supabase.from('categories').select('*', { count: 'exact', head: true }),
     supabase.from('tags').select('*', { count: 'exact', head: true })
   ])
@@ -35,7 +32,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     totalDocs: totalDocs || 0,
     publishedDocs: publishedDocs || 0,
     draftDocs: draftDocs || 0,
-    archivedDocs: archivedDocs || 0,
     totalCategories: totalCategories || 0,
     totalTags: totalTags || 0,
   }

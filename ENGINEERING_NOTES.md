@@ -515,3 +515,101 @@ The system includes pre-seeded categories to provide immediate structure:
 - **User Ownership:** Individual category/tag ownership with sharing
   - Current shared model works well for team collaboration
   - Could add if user base scales significantly
+
+## 10. User Data Isolation & Dashboard Architecture
+
+### Private vs Public Data Access Pattern
+
+The platform implements a clear separation between user-private and globally-public data access to ensure proper data isolation and consistent user experience:
+
+**Private Dashboard (User-Scoped):**
+- Document statistics filtered by `auth.uid() = user_id` 
+- Document management limited to user's own content
+- API endpoints: `/api/documents`, `/api/dashboard/stats`
+- Ensures users only see and manage their own documents
+
+**Public Documentation (Global):**
+- All published documents visible regardless of author
+- API endpoints: Functions in `/lib/data/public.ts`
+- SEO-optimized pages for content discovery
+- Enables shared knowledge base across all users
+
+### Dashboard Statistics Implementation
+
+Dashboard stats are user-specific to ensure consistency between displayed counts and actual document lists:
+
+```typescript
+// User-scoped document counts in /api/dashboard/stats
+const [
+  { count: totalDocs },
+  { count: publishedDocs },
+  { count: draftDocs }
+] = await Promise.all([
+  supabase.from('documents').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+  supabase.from('documents').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'published'),
+  supabase.from('documents').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'draft')
+])
+```
+
+**Why User-Scoped Dashboard:**
+- **Consistency:** Prevents confusion where global counts don't match user's document list
+- **Data Privacy:** Maintains proper isolation between users' content
+- **Performance:** Scales better as platform grows (constant time per user vs. linear growth)
+- **Industry Standards:** Follows established patterns for content management systems
+- **User Experience:** Users see statistics that reflect what they can actually manage
+
+### Data Access Architecture
+
+**User-Isolated Resources:**
+- Documents: Filtered by `user_id` in all dashboard operations
+- Document statistics: Scoped to current user's content
+- Document management: Create, read, update, delete only user's own documents
+
+**Shared Global Resources:**
+- Categories: Shared taxonomy across all users with `is_public` visibility control
+- Tags: Global tag system for consistent content organization
+- Published content: Accessible to all users on public documentation site
+
+### Row Level Security (RLS) Implementation
+
+Supabase RLS policies enforce data isolation at the database level:
+
+```sql
+-- Users can only access their own documents in dashboard context
+CREATE POLICY "Users can manage their own documents" ON documents
+  FOR ALL USING (auth.uid() = user_id);
+
+-- Published documents are viewable by everyone on public pages
+CREATE POLICY "Published documents are viewable by everyone" ON documents
+  FOR SELECT USING (status = 'published');
+```
+
+### API Endpoint Data Scoping
+
+**User-Scoped Endpoints:**
+- `GET /api/documents` - Returns only current user's documents
+- `GET /api/dashboard/stats` - Counts only current user's documents
+- `POST /api/documents` - Creates documents with current user's ID
+- `PUT /api/documents/[id]` - Updates only if user owns the document
+
+**Global Endpoints:**
+- `getRecentPublishedDocuments()` - All published documents for public homepage
+- `getPublishedDocumentBySlug()` - Any published document for public pages
+- `getAllPublishedDocuments()` - All published documents for public browsing
+
+### Architectural Decision Context
+
+This user-scoped approach was chosen to resolve a specific inconsistency where:
+- Dashboard showed global document counts (e.g., "5 total documents")
+- Document list showed only user's documents (e.g., 2 actual documents)
+- Users were confused about missing documents
+
+**Alternative Considered:**
+- Global dashboard showing all users' documents
+- **Rejected because:** Would require complex permission system, role management, and potential security risks
+
+**Implementation Benefits:**
+- Simple and secure by default
+- Consistent user experience
+- Clear separation of concerns
+- Easier to reason about and maintain

@@ -26,7 +26,7 @@ Try out the live application to see all features in action!
 - 📁 **Hierarchical Organization** - Categories with parent-child relationships
 - 🏷️ **Flexible Tagging** - Cross-cutting organization with many-to-many tags
 - 🔐 **Authentication** - Supabase Auth with email/password and Row Level Security
-- 📊 **Dashboard** - Complete CMS for managing documents, categories, and tags
+- 📊 **Dashboard** - User-scoped CMS for managing your own documents, categories, and tags
 - 🌐 **Public Documentation** - SEO-optimized public pages with server-side rendering
 - 📱 **Responsive Design** - Mobile-first design with dark/light mode support
 - 🔄 **Document Versioning** - Automatic version history on content changes
@@ -171,13 +171,15 @@ src/
 
 ### Documents
 
-- `GET /api/documents` - List documents with filtering (status, categoryId, limit)
-- `POST /api/documents` - Create new document
-- `PUT /api/documents?id=:id` - Update document by ID
-- `DELETE /api/documents?id=:id` - Delete document by ID
+- `GET /api/documents` - List user's documents with filtering (status, categoryId, limit)
+- `POST /api/documents` - Create new document (automatically assigned to current user)
+- `PUT /api/documents?id=:id` - Update document by ID (user must own the document)
+- `DELETE /api/documents?id=:id` - Delete document by ID (user must own the document)
 - `GET /api/documents/[id]/versions` - Get document version history
 - `POST /api/documents/[id]/tags` - Assign tags to document
 - `DELETE /api/documents/[id]/tags` - Remove tags from document
+
+**Note**: All document endpoints are user-scoped - users can only manage their own documents. Published documents from all users are accessible via public pages at `/docs/[slug]`.
 
 ### Categories
 
@@ -201,8 +203,8 @@ src/
 
 ### Dashboard
 
-- `GET /api/dashboard/stats` - Dashboard statistics and metrics
-- `GET /api/navigation/documents` - Published documents for navigation
+- `GET /api/dashboard/stats` - User-specific dashboard statistics and metrics
+- `GET /api/navigation/documents` - Published documents for navigation (global)
 
 ## License
 
