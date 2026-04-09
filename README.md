@@ -2,6 +2,12 @@
 
 A modern, full-stack documentation platform built with Next.js 15 and Supabase. Create, organize, and share knowledge effortlessly with powerful search, hierarchical organization, and a clean content management system.
 
+## 🌐 Live Demo
+
+**Production URL**: [https://docs-platform-dun.vercel.app/](https://docs-platform-dun.vercel.app/)
+
+Try out the live application to see all features in action!
+
 ## Tech Stack
 
 - **Framework**: Next.js 15.5.14 with App Router
