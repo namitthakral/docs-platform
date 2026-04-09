@@ -26,38 +26,18 @@ export default function LoginForm({
   const searchParams = useSearchParams()
   const loginMutation = useLogin()
 
-  // Handle URL parameters for confirmation messages
+  // Handle URL parameters for messages
   useEffect(() => {
-    const error = searchParams.get('error')
     const message = searchParams.get('message')
     
-    if (error && message) {
-      // Use the specific error message from the URL
+    if (message) {
       setUrlMessage({
-        type: 'error',
+        type: 'success',
         text: decodeURIComponent(message)
       })
-    } else if (error === 'confirmation_failed') {
-      setUrlMessage({
-        type: 'error',
-        text: 'Email confirmation failed. Please check your email and try again.'
-      })
-    } else if (error === 'confirmation_incomplete') {
-      setUrlMessage({
-        type: 'error',
-        text: 'Email confirmation could not be completed. Please try logging in or registering again.'
-      })
-    } else if (error === 'confirmation_error') {
-      setUrlMessage({
-        type: 'error',
-        text: 'An unexpected error occurred during email confirmation. Please try again.'
-      })
-    }
-    
-    // Clear URL parameters after showing message
-    if (error || message) {
+      
+      // Clear URL parameters after showing message
       const newUrl = new URL(window.location.href)
-      newUrl.searchParams.delete('error')
       newUrl.searchParams.delete('message')
       router.replace(newUrl.pathname, { scroll: false })
     }
