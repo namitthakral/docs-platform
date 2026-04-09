@@ -26,7 +26,7 @@ export default async function EditDocumentPage({
       <div className="mb-4">
         <Link
           href={getRoute.dashboard.documents()}
-          className="inline-flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+          className="inline-flex items-center space-x-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
           title="Back to Documents"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -35,8 +35,8 @@ export default async function EditDocumentPage({
       </div>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Edit Document</h1>
-        <p className="text-gray-600">Update your documentation content</p>
+        <h1 className="text-2xl font-bold text-foreground">Edit Document</h1>
+        <p className="text-muted-foreground">Update your documentation content</p>
       </div>
 
       <DocumentEditor document={document} />

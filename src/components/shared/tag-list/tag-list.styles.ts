@@ -4,9 +4,9 @@ export const tagListStyles = {
   
   // Tag base styles
   tag: {
-    base: 'inline-flex items-center gap-1 bg-blue-100 text-blue-800 rounded-full transition-colors hover:bg-blue-200',
+    base: 'inline-flex items-center gap-1 bg-primary/10 text-primary rounded-full transition-colors hover:bg-primary/20',
     text: 'font-medium truncate select-none',
-    removeButton: 'flex-shrink-0 ml-1 hover:bg-blue-300 rounded-full p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1',
+    removeButton: 'flex-shrink-0 ml-1 hover:bg-primary/30 rounded-full p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
     removeIcon: 'w-3 h-3',
     sizes: {
       sm: 'px-2 py-1 text-xs',
@@ -17,11 +17,11 @@ export const tagListStyles = {
   
   // Variants
   variants: {
-    default: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
-    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-    success: 'bg-green-100 text-green-800 hover:bg-green-200',
-    warning: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
-    danger: 'bg-red-100 text-red-800 hover:bg-red-200'
+    default: 'bg-primary/10 text-primary hover:bg-primary/20',
+    secondary: 'bg-muted text-muted-foreground hover:bg-accent',
+    success: 'bg-green-500/10 text-green-400 hover:bg-green-500/20',
+    warning: 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20',
+    danger: 'bg-destructive/10 text-destructive hover:bg-destructive/20'
   },
   
   // States

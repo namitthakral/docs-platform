@@ -148,13 +148,13 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
     <div className="max-w-none">
       {/* Preview Banner */}
       {isPreview && document.status === "draft" && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+        <div className="bg-yellow-500/10 border-l-4 border-yellow-400 p-4 mb-6">
           <div className="flex">
             <div className="shrink-0">
               <AlertTriangle className="h-5 w-5 text-yellow-400" />
             </div>
             <div className="ml-3">
-              <p className="text-sm text-yellow-700">
+              <p className="text-sm text-yellow-400">
                 <strong>Preview Mode:</strong> This is a draft document and not
                 publicly visible.
               </p>
@@ -172,31 +172,31 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
         {/* Main Content */}
         <div className="lg:col-span-3">
           {/* Document Header */}
-          <header className="mb-8 pb-8 border-b border-gray-200">
+          <header className="mb-8 pb-8 border-b border-border">
             <div className="space-y-4">
               {document.categories && (
                 <div className="flex items-center space-x-2">
-                  <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                  <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
                     {document.categories.name}
                   </span>
                   {document.status === "draft" && (
-                    <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                    <span className="bg-yellow-500/10 text-yellow-400 px-3 py-1 rounded-full text-sm font-medium">
                       Draft
                     </span>
                   )}
                 </div>
               )}
 
-              <h1 className="text-4xl font-bold text-gray-900">
+              <h1 className="text-4xl font-bold text-foreground">
                 {document.title}
               </h1>
 
               {document.description && (
-                <p className="text-xl text-gray-600">{document.description}</p>
+                <p className="text-xl text-gray-300">{document.description}</p>
               )}
 
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   {document.published_at && (
                     <time dateTime={document.published_at}>
                       Published{" "}
@@ -216,7 +216,7 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
                 {canEdit && (
                   <Link
                     href={`/dashboard/documents/${document.id}`}
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                    className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 transition-colors"
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit Document
@@ -226,7 +226,7 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
 
               {document.document_tags && document.document_tags.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-gray-900">Tags</h4>
+                  <h4 className="text-sm font-medium text-foreground">Tags</h4>
                   <TagList
                     tags={document.document_tags.map(docTag => ({
                       id: docTag.tags.id || '',
@@ -243,7 +243,7 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
           </header>
 
           {/* Document Content */}
-          <div className="prose prose-lg prose-gray max-w-none">
+          <div className="prose prose-lg max-w-none">
             <MarkdownRenderer content={document.content} />
           </div>
         </div>

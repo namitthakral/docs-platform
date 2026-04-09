@@ -1,51 +1,87 @@
 @import "tailwindcss";
 
 @theme {
-  --color-border: hsl(214.3 31.8% 91.4%);
-  --color-input: hsl(214.3 31.8% 91.4%);
-  --color-ring: hsl(222.2 84% 4.9%);
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(222.2 84% 4.9%);
-  --color-primary: hsl(222.2 47.4% 11.2%);
-  --color-primary-foreground: hsl(210 40% 98%);
-  --color-secondary: hsl(210 40% 96%);
-  --color-secondary-foreground: hsl(222.2 84% 4.9%);
-  --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(210 40% 98%);
-  --color-muted: hsl(210 40% 96%);
-  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
-  --color-accent: hsl(210 40% 96%);
-  --color-accent-foreground: hsl(222.2 84% 4.9%);
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222.2 84% 4.9%);
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(222.2 84% 4.9%);
+  /* Premium Dark Theme - Deep dark backgrounds with layered elevation */
+  --color-background: hsl(0 0% 4%); /* #0A0A0A - Deep dark page background */
+  --color-foreground: hsl(0 0% 91%); /* #E8E8E8 - Off-white text, not harsh */
+
+  /* Card and elevated surfaces - slightly lighter than background */
+  --color-card: hsl(0 0% 7%); /* #111111 - Card backgrounds */
+  --color-card-foreground: hsl(0 0% 91%); /* #E8E8E8 - Card text */
+
+  /* Muted surfaces and secondary text */
+  --color-muted: hsl(0 0% 10%); /* #1A1A1A - Muted backgrounds */
+  --color-muted-foreground: hsl(0 0% 63%); /* #A0A0A0 - Secondary/muted text */
+
+  /* Borders and inputs - subtle dark greys */
+  --color-border: hsl(0 0% 16%); /* #2A2A2A - Subtle borders */
+  --color-input: hsl(0 0% 20%); /* #333333 - Input backgrounds */
+
+  /* Primary brand colors - keep existing blue but ensure contrast */
+  --color-primary: hsl(217 91% 60%); /* Brighter blue for dark backgrounds */
+  --color-primary-foreground: hsl(0 0% 100%); /* Pure white on primary */
+
+  /* Secondary surfaces */
+  --color-secondary: hsl(0 0% 13%); /* #212121 - Secondary button backgrounds */
+  --color-secondary-foreground: hsl(0 0% 91%); /* #E8E8E8 - Secondary text */
+
+  /* Accent colors */
+  --color-accent: hsl(0 0% 13%); /* #212121 - Accent backgrounds */
+  --color-accent-foreground: hsl(0 0% 91%); /* #E8E8E8 - Accent text */
+
+  /* Popover and dropdown surfaces */
+  --color-popover: hsl(0 0% 7%); /* #111111 - Same as cards */
+  --color-popover-foreground: hsl(0 0% 91%); /* #E8E8E8 - Popover text */
+
+  /* Destructive colors - visible on dark */
+  --color-destructive: hsl(0 75% 60%); /* Brighter red for visibility */
+  --color-destructive-foreground: hsl(0 0% 100%); /* White on destructive */
+
+  /* Focus rings */
+  --color-ring: hsl(217 91% 60%); /* Match primary color */
+
+  /* Additional dark theme colors for specific use cases */
+  --color-surface-1: hsl(0 0% 4%); /* #0A0A0A - Page background */
+  --color-surface-2: hsl(0 0% 7%); /* #111111 - Card/panel background */
+  --color-surface-3: hsl(0 0% 10%); /* #1A1A1A - Elevated surfaces */
+  --color-surface-4: hsl(0 0% 13%); /* #212121 - Hover states */
+
+  /* Status colors optimized for dark backgrounds */
+  --color-success: hsl(142 76% 36%); /* Green for success states */
+  --color-success-foreground: hsl(0 0% 100%);
+  --color-warning: hsl(38 92% 50%); /* Amber for warnings */
+  --color-warning-foreground: hsl(0 0% 0%);
+  --color-info: hsl(217 91% 60%); /* Blue for info */
+  --color-info-foreground: hsl(0 0% 100%);
+
   --radius: 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
+/* Light theme override - only if explicitly needed in the future
+@media (prefers-color-scheme: light) {
   @theme {
-    --color-background: hsl(222.2 84% 4.9%);
-    --color-foreground: hsl(210 40% 98%);
-    --color-card: hsl(222.2 84% 4.9%);
-    --color-card-foreground: hsl(210 40% 98%);
-    --color-popover: hsl(222.2 84% 4.9%);
-    --color-popover-foreground: hsl(210 40% 98%);
-    --color-primary: hsl(210 40% 98%);
-    --color-primary-foreground: hsl(222.2 47.4% 11.2%);
-    --color-secondary: hsl(217.2 32.6% 17.5%);
-    --color-secondary-foreground: hsl(210 40% 98%);
-    --color-muted: hsl(217.2 32.6% 17.5%);
-    --color-muted-foreground: hsl(215 20.2% 65.1%);
-    --color-accent: hsl(217.2 32.6% 17.5%);
-    --color-accent-foreground: hsl(210 40% 98%);
-    --color-destructive: hsl(0 62.8% 30.6%);
+    --color-background: hsl(0 0% 100%);
+    --color-foreground: hsl(222.2 84% 4.9%);
+    --color-card: hsl(0 0% 100%);
+    --color-card-foreground: hsl(222.2 84% 4.9%);
+    --color-popover: hsl(0 0% 100%);
+    --color-popover-foreground: hsl(222.2 84% 4.9%);
+    --color-primary: hsl(222.2 47.4% 11.2%);
+    --color-primary-foreground: hsl(210 40% 98%);
+    --color-secondary: hsl(210 40% 96%);
+    --color-secondary-foreground: hsl(222.2 84% 4.9%);
+    --color-muted: hsl(210 40% 96%);
+    --color-muted-foreground: hsl(215.4 16.3% 46.9%);
+    --color-accent: hsl(210 40% 96%);
+    --color-accent-foreground: hsl(222.2 84% 4.9%);
+    --color-destructive: hsl(0 84.2% 60.2%);
     --color-destructive-foreground: hsl(210 40% 98%);
-    --color-border: hsl(217.2 32.6% 17.5%);
-    --color-input: hsl(217.2 32.6% 17.5%);
-    --color-ring: hsl(212.7 26.8% 83.9%);
+    --color-border: hsl(214.3 31.8% 91.4%);
+    --color-input: hsl(214.3 31.8% 91.4%);
+    --color-ring: hsl(222.2 84% 4.9%);
   }
 }
+*/
 
 @layer base {
   * {
@@ -75,39 +111,111 @@
 
 /* Markdown content styles */
 .prose {
-  @apply max-w-none;
+  @apply max-w-none text-foreground;
 }
 
 .prose h1 {
-  @apply text-3xl font-bold tracking-tight;
+  @apply text-3xl font-bold tracking-tight text-foreground;
 }
 
 .prose h2 {
-  @apply text-2xl font-semibold tracking-tight;
+  @apply text-2xl font-semibold tracking-tight text-foreground;
 }
 
 .prose h3 {
-  @apply text-xl font-semibold tracking-tight;
+  @apply text-xl font-semibold tracking-tight text-foreground;
 }
 
 .prose h4 {
-  @apply text-lg font-semibold tracking-tight;
+  @apply text-lg font-semibold tracking-tight text-foreground;
+}
+
+.prose h5 {
+  @apply text-base font-semibold tracking-tight text-foreground;
+}
+
+.prose h6 {
+  @apply text-sm font-semibold tracking-tight text-foreground;
 }
 
 .prose p {
-  @apply leading-7;
+  @apply leading-7 text-foreground;
+}
+
+.prose ul,
+.prose ol {
+  @apply text-foreground;
+}
+
+.prose li {
+  @apply text-foreground;
+}
+
+.prose strong {
+  @apply text-foreground font-semibold;
+}
+
+.prose em {
+  @apply text-foreground;
+}
+
+.prose a {
+  @apply text-primary hover:text-primary/80 underline;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-primary pl-4 italic text-muted-foreground bg-primary/5 py-2 rounded-r;
 }
 
 .prose code {
-  @apply relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold;
+  @apply relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold text-foreground;
 }
 
 .prose pre {
-  @apply overflow-x-auto rounded-lg border bg-muted p-4;
+  @apply overflow-x-auto rounded-lg border bg-muted p-4 text-foreground;
 }
 
 .prose pre code {
-  @apply bg-transparent p-0;
+  @apply bg-transparent p-0 text-foreground;
+}
+
+.prose table {
+  @apply border-collapse border border-border;
+}
+
+.prose th {
+  @apply border border-border px-4 py-2 text-left font-semibold text-foreground bg-muted;
+}
+
+.prose td {
+  @apply border border-border px-4 py-2 text-foreground;
+}
+
+.prose hr {
+  @apply border-border;
+}
+
+/* Fix native select and option styling */
+select {
+  color-scheme: dark;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+select option {
+  background-color: hsl(var(--color-input));
+  color: hsl(var(--color-foreground));
+}
+
+select option:checked {
+  background-color: hsl(var(--color-primary));
+  color: hsl(var(--color-primary-foreground));
 }
 
 /* Grid background pattern */

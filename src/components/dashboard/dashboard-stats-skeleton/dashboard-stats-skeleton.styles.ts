@@ -1,6 +1,6 @@
 export const dashboardStatsSkeletonStyles = {
   // Skeleton loading for stats
-  skeletonCard: "bg-white p-6 rounded-lg shadow animate-pulse",
+  skeletonCard: "bg-card p-6 rounded-lg shadow animate-pulse border border-border",
   skeletonContent: "flex items-center",
   skeletonIcon: "w-8 h-8 bg-gray-200 rounded-md",
   skeletonTextContainer: "ml-4 flex-1",

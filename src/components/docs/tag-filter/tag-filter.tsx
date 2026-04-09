@@ -72,7 +72,7 @@ export default function TagFilter({
             >
               <span
                 className={
-                  isSelected ? "text-blue-700 font-medium" : "text-gray-900"
+                  isSelected ? "text-primary font-medium" : "text-foreground"
                 }
               >
                 {tag.name}

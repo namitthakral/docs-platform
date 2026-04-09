@@ -3,7 +3,7 @@ export const unifiedNavigationStyles = {
   // Desktop sidebar styles
   desktop: {
     container:
-      "hidden md:block w-64 bg-white shadow-sm border-r border-gray-200 overflow-y-auto shrink-0 h-full",
+      "hidden md:block w-64 bg-card shadow-sm border-r border-border overflow-y-auto shrink-0 h-full",
     nav: "p-4",
     navList: "space-y-2",
     navItem: "",
@@ -13,16 +13,16 @@ export const unifiedNavigationStyles = {
   mobile: {
     overlay: {
       container: "fixed inset-0 z-50 md:hidden",
-      backdrop: "fixed inset-0 bg-gray-500 opacity-50",
+      backdrop: "fixed inset-0 bg-black/50",
       sidebar:
-        "fixed left-0 top-0 h-full w-64 bg-white shadow-lg border-r border-gray-200 overflow-y-auto",
+        "fixed left-0 top-0 h-full w-64 bg-card shadow-lg border-r border-border overflow-y-auto",
     },
     header: {
-      container: "p-3 border-b border-gray-200",
+      container: "p-3 border-b border-border",
       content: "flex items-center justify-between",
-      title: "text-lg font-semibold text-gray-900",
+      title: "text-lg font-semibold text-foreground",
       closeButton:
-        "p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md",
+        "p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md",
       closeIcon: "w-5 h-5",
     },
     nav: "p-2",
@@ -31,27 +31,27 @@ export const unifiedNavigationStyles = {
   // Navigation link styles
   navLink: {
     base: "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-    active: "bg-blue-100 text-blue-700",
-    inactive: "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
-    disabled: "text-gray-400 cursor-not-allowed",
+    active: "bg-primary/10 text-primary",
+    inactive: "text-muted-foreground hover:text-foreground hover:bg-muted",
+    disabled: "text-muted-foreground/50 cursor-not-allowed",
   },
 
   // Icon and text styles
   navIcon: "w-4 h-4 flex-shrink-0 mr-3",
   navText: "",
   navBadge:
-    "ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800",
+    "ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary",
 
   // Category styles (for docs navigation)
   category: {
     button: {
       base: "flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md transition-colors",
       withDocs:
-        "text-gray-700 hover:text-gray-900 hover:bg-gray-50 cursor-pointer",
-      withoutDocs: "text-gray-500 cursor-default",
+        "text-foreground/80 hover:text-foreground hover:bg-muted cursor-pointer",
+      withoutDocs: "text-muted-foreground cursor-default",
     },
     icon: "w-4 h-4 mr-2",
-    count: "ml-2 text-xs text-gray-500",
+    count: "ml-2 text-xs text-muted-foreground",
     expandIcon: {
       base: "w-4 h-4 transition-transform",
       expanded: "rotate-90",
@@ -63,27 +63,27 @@ export const unifiedNavigationStyles = {
     list: "ml-6 mt-1 space-y-1",
     link: {
       base: "flex items-center px-3 py-1.5 text-sm rounded-md transition-colors",
-      active: "bg-blue-50 text-blue-700 font-medium",
-      inactive: "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
+      active: "bg-primary/10 text-primary font-medium",
+      inactive: "text-muted-foreground hover:text-foreground hover:bg-muted",
     },
     icon: "w-3 h-3 mr-2",
   },
 
   // User section styles
   userSection: {
-    container: "p-4 border-t border-gray-200",
+    container: "p-4 border-t border-border",
     content: "space-y-3",
     userInfo: {
       container: "flex items-center space-x-2",
       avatar:
-        "w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center",
-      avatarIcon: "w-4 h-4 text-blue-600",
+        "w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center",
+      avatarIcon: "w-4 h-4 text-primary",
       email: "flex-1 min-w-0",
-      emailText: "text-sm text-gray-900 truncate",
+      emailText: "text-sm text-foreground truncate",
     },
     signOut: {
       button:
-        "flex items-center space-x-2 w-full text-sm text-gray-600 hover:text-red-600 transition-colors cursor-pointer",
+        "flex items-center space-x-2 w-full text-sm text-muted-foreground hover:text-destructive transition-colors cursor-pointer",
       icon: "w-4 h-4",
     },
   },
@@ -93,17 +93,17 @@ export const unifiedNavigationStyles = {
     container: "p-6",
     skeleton: "animate-pulse space-y-4",
     skeletonItem: {
-      large: "h-4 bg-gray-200 rounded w-3/4",
-      medium: "h-4 bg-gray-200 rounded w-1/2",
-      small: "h-4 bg-gray-200 rounded w-2/3",
+      large: "h-4 bg-muted rounded w-3/4",
+      medium: "h-4 bg-muted rounded w-1/2",
+      small: "h-4 bg-muted rounded w-2/3",
     },
   },
 
   // Special link styles (like "All Documentation")
   specialLink: {
     base: "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors mb-4",
-    active: "bg-blue-100 text-blue-700",
-    inactive: "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
+    active: "bg-primary/10 text-primary",
+    inactive: "text-muted-foreground hover:text-foreground hover:bg-muted",
   },
 }
 
