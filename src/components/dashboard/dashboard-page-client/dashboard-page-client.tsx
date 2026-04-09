@@ -1,13 +1,35 @@
 "use client"
 
 import Link from "next/link"
-import { FileText, Edit, Plus, Check, Clipboard } from "lucide-react"
+import { useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
+import { FileText, Edit, Plus, Check, Clipboard, CheckCircle } from "lucide-react"
+import { toast } from "sonner"
 import { useDashboardStats } from "@/hooks/use-dashboard-stats"
 import { dashboardPageClientStyles } from "./dashboard-page-client.styles"
 import { getRoute } from "@/config/routes"
 
 export default function DashboardPageClient() {
   const { stats, isLoading, isError, error } = useDashboardStats()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Handle email confirmation success
+  useEffect(() => {
+    const confirmed = searchParams.get('confirmed')
+    
+    if (confirmed === 'true') {
+      toast.success('Email confirmed successfully! Welcome to your dashboard.', {
+        duration: 5000,
+        icon: <CheckCircle className="h-4 w-4" />,
+      })
+      
+      // Clear the URL parameter
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('confirmed')
+      router.replace(newUrl.pathname, { scroll: false })
+    }
+  }, [searchParams, router])
 
   if (isError) {
     return (

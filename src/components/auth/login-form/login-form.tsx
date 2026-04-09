@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { getRoute } from "@/config/routes"
+import { useLogin } from "@/hooks/use-auth-mutations"
 import { LoginFormProps } from "./login-form.props"
 import { loginFormStyles } from "./login-form.styles"
 
@@ -15,39 +15,68 @@ export default function LoginForm({
 }: LoginFormProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [urlMessage, setUrlMessage] = useState<{
+    type: 'success' | 'error'
+    text: string
+  } | null>(null)
 
   const router = useRouter()
-  const supabase = createClient()
+  const searchParams = useSearchParams()
+  const loginMutation = useLogin()
+
+  // Handle URL parameters for confirmation messages
+  useEffect(() => {
+    const error = searchParams.get('error')
+    const message = searchParams.get('message')
+    
+    if (error && message) {
+      // Use the specific error message from the URL
+      setUrlMessage({
+        type: 'error',
+        text: decodeURIComponent(message)
+      })
+    } else if (error === 'confirmation_failed') {
+      setUrlMessage({
+        type: 'error',
+        text: 'Email confirmation failed. Please check your email and try again.'
+      })
+    } else if (error === 'confirmation_incomplete') {
+      setUrlMessage({
+        type: 'error',
+        text: 'Email confirmation could not be completed. Please try logging in or registering again.'
+      })
+    } else if (error === 'confirmation_error') {
+      setUrlMessage({
+        type: 'error',
+        text: 'An unexpected error occurred during email confirmation. Please try again.'
+      })
+    }
+    
+    // Clear URL parameters after showing message
+    if (error || message) {
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('error')
+      newUrl.searchParams.delete('message')
+      router.replace(newUrl.pathname, { scroll: false })
+    }
+  }, [searchParams, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
 
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) {
-        setError(error.message)
-        return
+    loginMutation.mutate(
+      { email, password },
+      {
+        onSuccess: () => {
+          if (onSuccess) {
+            onSuccess()
+          } else {
+            router.push(redirectTo)
+            router.refresh()
+          }
+        },
       }
-
-      if (onSuccess) {
-        onSuccess()
-      } else {
-        router.push(redirectTo)
-        router.refresh()
-      }
-    } catch {
-      setError("An unexpected error occurred")
-    } finally {
-      setLoading(false)
-    }
+    )
   }
 
   return (
@@ -100,15 +129,25 @@ export default function LoginForm({
           </div>
         </div>
 
-        {error && <div className={loginFormStyles.errorMessage}>{error}</div>}
+        {urlMessage && (
+          <div className={urlMessage.type === 'error' ? loginFormStyles.errorMessage : loginFormStyles.successMessage}>
+            {urlMessage.text}
+          </div>
+        )}
+
+        {loginMutation.error && (
+          <div className={loginFormStyles.errorMessage}>
+            {loginMutation.error.message}
+          </div>
+        )}
 
         <div className={loginFormStyles.buttonWrapper}>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loginMutation.isPending}
             className={loginFormStyles.submitButton}
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loginMutation.isPending ? "Signing in..." : "Sign in"}
           </button>
         </div>
       </form>

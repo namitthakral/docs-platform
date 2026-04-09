@@ -12,6 +12,11 @@ export const ROUTES = {
     CATEGORIES: '/api/categories',
     SEARCH: '/api/search',
     TAGS: '/api/tags',
+    AUTH: {
+      LOGIN: '/api/auth/login',
+      REGISTER: '/api/auth/register',
+      LOGOUT: '/api/auth/logout',
+    },
     DASHBOARD: {
       SEARCH: '/api/dashboard/search',
     },
@@ -60,6 +65,11 @@ export const getRoute = {
       id ? `${ROUTES.API.TAGS}/${id}` : ROUTES.API.TAGS,
     documentTags: (documentId: string) => 
       `${ROUTES.API.DOCUMENTS}/${documentId}/tags`,
+    auth: {
+      login: () => ROUTES.API.AUTH.LOGIN,
+      register: () => ROUTES.API.AUTH.REGISTER,
+      logout: () => ROUTES.API.AUTH.LOGOUT,
+    },
     dashboard: {
       search: (query: string) => 
         `${ROUTES.API.DASHBOARD.SEARCH}?q=${encodeURIComponent(query.trim())}`,

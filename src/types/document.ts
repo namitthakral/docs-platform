@@ -44,7 +44,7 @@ type RawDocumentBase = Pick<Document, 'id' | 'title' | 'slug'> & {
 }
 
 export type RawDocumentTableRow = RawDocumentBase &
-  Pick<Document, 'created_at' | 'updated_at' | 'published_at'> & {
+  Pick<Document, 'created_at' | 'updated_at' | 'published_at' | 'user_id'> & {
     categories: CategoryReference | null
   }
 

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { queryKeys } from "@/lib/query-keys"
 import { Eye, Edit, Trash2, FileText, Share } from "lucide-react"
 import { formatRelativeTime } from "@/lib/helpers"
@@ -11,6 +12,7 @@ import {
   useUpdateDocument,
   useDeleteDocument,
 } from "@/hooks/use-document-mutations"
+import { useCurrentUser } from "@/hooks/use-current-user"
 import { DocumentsTableProps, Document } from "./documents-table.props"
 import { documentsTableStyles } from "./documents-table.styles"
 import { getRoute } from "@/config/routes"
@@ -26,10 +28,16 @@ export default function DocumentsTable({ documents }: DocumentsTableProps) {
     document: null,
   })
   const queryClient = useQueryClient()
+  const { data: currentUser } = useCurrentUser()
 
   // Mutation hooks
   const updateDocumentMutation = useUpdateDocument()
   const deleteDocumentMutation = useDeleteDocument()
+
+  // Helper function to check if current user owns the document
+  const isOwner = (doc: Document) => {
+    return currentUser && doc.user_id === currentUser.id
+  }
 
   const handleStatusToggle = async (doc: Document) => {
     setLoading(doc.id)
@@ -99,16 +107,22 @@ export default function DocumentsTable({ documents }: DocumentsTableProps) {
 
     try {
       await navigator.clipboard.writeText(url)
-      // Note: Could add a toast notification here in the future
+      toast.success("Document link copied to clipboard!")
     } catch (error) {
       console.error("Failed to copy to clipboard:", error)
       // Fallback for browsers that don't support clipboard API
-      const textArea = document.createElement("textarea")
-      textArea.value = url
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand("copy")
-      document.body.removeChild(textArea)
+      try {
+        const textArea = document.createElement("textarea")
+        textArea.value = url
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand("copy")
+        document.body.removeChild(textArea)
+        toast.success("Document link copied to clipboard!")
+      } catch (fallbackError) {
+        console.error("Fallback copy failed:", fallbackError)
+        toast.error("Failed to copy link to clipboard")
+      }
     }
   }
 
@@ -165,22 +179,36 @@ export default function DocumentsTable({ documents }: DocumentsTableProps) {
                 )}
               </td>
               <td className={documentsTableStyles.cellCenter}>
-                <button
-                  onClick={() => handleStatusToggle(doc)}
-                  disabled={loading === doc.id}
-                  className={`${documentsTableStyles.statusButton} ${
-                    doc.status === DocumentStatus.PUBLISHED
-                      ? documentsTableStyles.statusPublished
-                      : documentsTableStyles.statusDraft
-                  } ${loading === doc.id ? documentsTableStyles.statusLoading : documentsTableStyles.statusClickable}`}
-                >
-                  {loading === doc.id ? (
-                    <div className={documentsTableStyles.loadingSpinner} />
-                  ) : null}
-                  {doc.status === DocumentStatus.PUBLISHED
-                    ? "Published"
-                    : "Draft"}
-                </button>
+                {isOwner(doc) ? (
+                  <button
+                    onClick={() => handleStatusToggle(doc)}
+                    disabled={loading === doc.id}
+                    className={`${documentsTableStyles.statusButton} ${
+                      doc.status === DocumentStatus.PUBLISHED
+                        ? documentsTableStyles.statusPublished
+                        : documentsTableStyles.statusDraft
+                    } ${loading === doc.id ? documentsTableStyles.statusLoading : documentsTableStyles.statusClickable}`}
+                  >
+                    {loading === doc.id ? (
+                      <div className={documentsTableStyles.loadingSpinner} />
+                    ) : null}
+                    {doc.status === DocumentStatus.PUBLISHED
+                      ? "Published"
+                      : "Draft"}
+                  </button>
+                ) : (
+                  <span
+                    className={`${documentsTableStyles.statusButton} ${
+                      doc.status === DocumentStatus.PUBLISHED
+                        ? documentsTableStyles.statusPublished
+                        : documentsTableStyles.statusDraft
+                    }`}
+                  >
+                    {doc.status === DocumentStatus.PUBLISHED
+                      ? "Published"
+                      : "Draft"}
+                  </span>
+                )}
               </td>
               <td
                 className={`${documentsTableStyles.cellCenter} ${documentsTableStyles.timeText}`}
@@ -207,21 +235,25 @@ export default function DocumentsTable({ documents }: DocumentsTableProps) {
                     <Share className={documentsTableStyles.actionIcon} />
                   </button>
                 )}
-                <Link
-                  href={getRoute.dashboard.document(doc.id)}
-                  className={documentsTableStyles.editLink}
-                  title="Edit document"
-                >
-                  <Edit className={documentsTableStyles.actionIcon} />
-                </Link>
-                <button
-                  onClick={() => handleDelete(doc)}
-                  disabled={loading === doc.id}
-                  className={documentsTableStyles.deleteButton}
-                  title="Delete document"
-                >
-                  <Trash2 className={documentsTableStyles.actionIcon} />
-                </button>
+                {isOwner(doc) && (
+                  <Link
+                    href={getRoute.dashboard.document(doc.id)}
+                    className={documentsTableStyles.editLink}
+                    title="Edit document"
+                  >
+                    <Edit className={documentsTableStyles.actionIcon} />
+                  </Link>
+                )}
+                {isOwner(doc) && (
+                  <button
+                    onClick={() => handleDelete(doc)}
+                    disabled={loading === doc.id}
+                    className={documentsTableStyles.deleteButton}
+                    title="Delete document"
+                  >
+                    <Trash2 className={documentsTableStyles.actionIcon} />
+                  </button>
+                )}
               </td>
             </tr>
           ))}

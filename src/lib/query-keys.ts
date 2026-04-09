@@ -39,6 +39,12 @@ export const queryKeys = {
   dashboardStats: {
     all: ['dashboard-stats'] as const,
   },
+
+  // Authentication
+  auth: {
+    all: ['auth'] as const,
+    user: () => [...queryKeys.auth.all, 'user'] as const,
+  },
 } as const
 
 /**
@@ -68,6 +74,11 @@ export const invalidateQueries = {
   // Invalidate dashboard stats queries
   dashboardStats: (queryClient: { invalidateQueries: (options: { queryKey: readonly string[] }) => void }) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats.all })
+  },
+
+  // Invalidate auth queries
+  auth: (queryClient: { invalidateQueries: (options: { queryKey: readonly string[] }) => void }) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.auth.all })
   },
 }
 

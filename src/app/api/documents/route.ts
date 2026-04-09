@@ -26,6 +26,15 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
 
+    // Get current user
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return createResponse(false, null, "Unauthorized", 401)
+    }
+
     const status = searchParams.get("status") as DocumentStatus | null
     const categoryId = searchParams.get("categoryId")
     const limit = searchParams.get("limit")
@@ -41,6 +50,7 @@ export async function GET(request: NextRequest) {
         slug,
         description,
         status,
+        user_id,
         created_at,
         updated_at,
         published_at,
@@ -57,6 +67,7 @@ export async function GET(request: NextRequest) {
         )
       `,
       )
+      .eq("user_id", user.id)
       .order("updated_at", { ascending: false })
 
     if (status) {

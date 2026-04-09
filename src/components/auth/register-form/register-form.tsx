@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
 import { getRoute } from "@/config/routes"
+import { useRegister } from "@/hooks/use-auth-mutations"
 import { RegisterFormProps } from "./register-form.props"
 import { registerFormStyles } from "./register-form.styles"
 
@@ -14,50 +14,35 @@ export default function RegisterForm({
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
+  const [validationError, setValidationError] = useState<string | null>(null)
 
-  const supabase = createClient()
+  const registerMutation = useRegister()
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
-    setMessage(null)
+    setValidationError(null)
 
+    // Client-side validation
     if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      setLoading(false)
+      setValidationError("Passwords do not match")
       return
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters")
-      setLoading(false)
+      setValidationError("Password must be at least 6 characters")
       return
     }
 
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      })
-
-      if (error) {
-        setError(error.message)
-        return
+    registerMutation.mutate(
+      { email, password },
+      {
+        onSuccess: () => {
+          if (onSuccess) {
+            onSuccess()
+          }
+        },
       }
-
-      setMessage("Check your email for a confirmation link!")
-      if (onSuccess) {
-        onSuccess()
-      }
-    } catch {
-      setError("An unexpected error occurred")
-    } finally {
-      setLoading(false)
-    }
+    )
   }
 
   return (
@@ -128,21 +113,25 @@ export default function RegisterForm({
           </div>
         </div>
 
-        {error && (
-          <div className={registerFormStyles.errorMessage}>{error}</div>
+        {(validationError || registerMutation.error) && (
+          <div className={registerFormStyles.errorMessage}>
+            {validationError || registerMutation.error?.message}
+          </div>
         )}
 
-        {message && (
-          <div className={registerFormStyles.successMessage}>{message}</div>
+        {registerMutation.isSuccess && (
+          <div className={registerFormStyles.successMessage}>
+            Check your email for a confirmation link!
+          </div>
         )}
 
         <div className={registerFormStyles.buttonWrapper}>
           <button
             type="submit"
-            disabled={loading}
+            disabled={registerMutation.isPending}
             className={registerFormStyles.submitButton}
           >
-            {loading ? "Creating account..." : "Create account"}
+            {registerMutation.isPending ? "Creating account..." : "Create account"}
           </button>
         </div>
       </form>
