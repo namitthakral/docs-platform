@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { Eye, EyeOff } from "lucide-react"
 import { getRoute } from "@/config/routes"
 import { useLogin } from "@/hooks/use-auth-mutations"
 import { LoginFormProps } from "./login-form.props"
@@ -15,6 +16,7 @@ export default function LoginForm({
 }: LoginFormProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [urlMessage, setUrlMessage] = useState<{
     type: 'success' | 'error'
     text: string
@@ -115,17 +117,32 @@ export default function LoginForm({
             <label htmlFor="password" className={loginFormStyles.label}>
               Password
             </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              className={loginFormStyles.passwordInput}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className={loginFormStyles.passwordContainer}>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                className={loginFormStyles.passwordInput}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                onMouseDown={(e) => e.preventDefault()}
+                className={loginFormStyles.passwordToggle}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className={loginFormStyles.passwordIcon} />
+                ) : (
+                  <Eye className={loginFormStyles.passwordIcon} />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 

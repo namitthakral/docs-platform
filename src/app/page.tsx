@@ -1,8 +1,25 @@
+"use client"
+
 import Link from "next/link"
+import { useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Search, BookOpen, Zap, Lock } from "lucide-react"
 import { getRoute } from "@/config/routes"
 
 export default function Home() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Handle auth code redirects
+  useEffect(() => {
+    const code = searchParams.get('code')
+    
+    if (code) {
+      // Redirect to the auth confirmation handler with the code
+      router.replace(`/auth/confirm?code=${code}`)
+      return
+    }
+  }, [searchParams, router])
   return (
     <div className="min-h-screen md:h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-800 md:overflow-hidden">
       {/* Background Pattern */}

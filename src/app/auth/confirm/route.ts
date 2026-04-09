@@ -7,16 +7,32 @@ export async function GET(request: NextRequest) {
     const { searchParams, origin } = new URL(request.url)
     const supabase = await createClient()
     
-    // Check if user is already authenticated (Supabase should have verified them)
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    // Get the authorization code from Supabase redirect
+    const code = searchParams.get('code')
     
-    if (user && !userError) {
-      // User is authenticated - email confirmation was successful
-      console.log('Email confirmation successful for user:', user.id)
+    if (code) {
+      // Exchange the code for a session
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
       
-      const redirectUrl = new URL(getRoute.dashboard.home(), origin)
-      redirectUrl.searchParams.set('confirmed', 'true')
-      return NextResponse.redirect(redirectUrl.toString())
+      if (!error && data.user) {
+        // Email confirmation successful - user is now logged in
+        console.log('Email confirmation successful for user:', data.user.id)
+        
+        const redirectUrl = new URL(getRoute.dashboard.home(), origin)
+        redirectUrl.searchParams.set('confirmed', 'true')
+        return NextResponse.redirect(redirectUrl.toString())
+      } else {
+        // Code exchange failed
+        console.error('Code exchange error:', error)
+        
+        const redirectUrl = new URL(getRoute.auth.login(), origin)
+        redirectUrl.searchParams.set('error', 'confirmation_failed')
+        
+        const message = error?.message || 'Email confirmation failed. Please try again.'
+        redirectUrl.searchParams.set('message', encodeURIComponent(message))
+        
+        return NextResponse.redirect(redirectUrl.toString())
+      }
     }
     
     // Check for error parameters from Supabase redirect
@@ -29,19 +45,18 @@ export async function GET(request: NextRequest) {
       const redirectUrl = new URL(getRoute.auth.login(), origin)
       redirectUrl.searchParams.set('error', 'confirmation_failed')
       
-      // Use Supabase's error description or provide a fallback
       const message = errorDescription || 'Email confirmation failed. Please try again.'
       redirectUrl.searchParams.set('message', encodeURIComponent(message))
       
       return NextResponse.redirect(redirectUrl.toString())
     }
     
-    // No user and no error - something went wrong
-    console.warn('Email confirmation: No user found and no error reported')
+    // No code and no error - invalid request
+    console.warn('Email confirmation: No code or error parameters found')
     
     const redirectUrl = new URL(getRoute.auth.login(), origin)
-    redirectUrl.searchParams.set('error', 'confirmation_incomplete')
-    redirectUrl.searchParams.set('message', encodeURIComponent('Email confirmation could not be completed. Please try logging in or registering again.'))
+    redirectUrl.searchParams.set('error', 'invalid_confirmation_link')
+    redirectUrl.searchParams.set('message', encodeURIComponent('Invalid confirmation link. Please try registering again.'))
     return NextResponse.redirect(redirectUrl.toString())
     
   } catch (error) {
