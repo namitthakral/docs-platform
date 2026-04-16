@@ -100,6 +100,7 @@ export function DynamicNavigationItems({
                   <Link
                     key={doc.id}
                     href={getRoute.docsPage(doc.slug)}
+                    prefetch={true}
                     onClick={onNavigate}
                     className={cn(
                       styles.documents.link.base,

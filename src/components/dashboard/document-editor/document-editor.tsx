@@ -107,6 +107,8 @@ export default function DocumentEditor({
   const watchedContent = useWatch({ control: form.control, name: "content" })
   const watchedSlug = useWatch({ control: form.control, name: "slug" })
   const watchedStatus = useWatch({ control: form.control, name: "status" })
+  const watchedCategoryId = useWatch({ control: form.control, name: "category_id" })
+  const watchedDescription = useWatch({ control: form.control, name: "description" })
 
   // Mutation hooks
   const createDocumentMutation = useCreateDocument()
@@ -288,6 +290,9 @@ export default function DocumentEditor({
     watchedContent,
     watchedTitle,
     watchedSlug,
+    watchedStatus,
+    watchedCategoryId,
+    watchedDescription,
     currentDocument,
     isSubmitting,
     isManualSaving,
@@ -585,26 +590,23 @@ export default function DocumentEditor({
 
     // For new documents, disable if missing required fields (title AND content)
     if (!currentDocument) {
-      const formData = getValues()
       const hasRequiredFields = Boolean(
-        formData.title?.trim() && formData.content?.trim(),
+        watchedTitle?.trim() && watchedContent?.trim(),
       )
       return !hasRequiredFields
     }
 
     // For existing documents, disable if no changes from saved document
-    const formData = getValues()
     const hasActualChanges =
-      (formData.title || "") !== (currentDocument.title || "") ||
-      (formData.slug || "") !== (currentDocument.slug || "") ||
-      (formData.content || "") !== (currentDocument.content || "") ||
-      (formData.description || "") !== (currentDocument.description || "") ||
-      formData.status !== currentDocument.status ||
-      (formData.category_id || null) !== (currentDocument.category_id || null)
+      (watchedTitle || "") !== (currentDocument.title || "") ||
+      (watchedSlug || "") !== (currentDocument.slug || "") ||
+      (watchedContent || "") !== (currentDocument.content || "") ||
+      (watchedDescription || "") !== (currentDocument.description || "") ||
+      watchedStatus !== currentDocument.status ||
+      (watchedCategoryId || null) !== (currentDocument.category_id || null)
 
     return !hasActualChanges
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasJustSaved, currentDocument, getValues, watchedTitle, watchedContent])
+  }, [hasJustSaved, currentDocument, watchedTitle, watchedContent, watchedSlug, watchedStatus, watchedCategoryId, watchedDescription])
 
   return (
     <div className={documentEditorStyles.container}>

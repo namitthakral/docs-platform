@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { FileText, ChevronRight, Plus } from "lucide-react"
+import { FileText, ChevronRight, Plus, X } from "lucide-react"
 import { getRoute } from "@/config/routes"
 import TagFilter from "@/components/docs/tag-filter/tag-filter"
 import type { Tag } from "@/types/tag"
@@ -94,7 +94,10 @@ export default function DocsHomeClient({
           </h2>
           {/* Tag Filter - positioned where it's most relevant */}
           <div className="sm:max-w-sm">
-            <TagFilter selectedTags={selectedTags} onTagsChange={handleTagsChange} />
+            <TagFilter
+              selectedTags={selectedTags}
+              onTagsChange={handleTagsChange}
+            />
           </div>
         </div>
 
@@ -109,6 +112,7 @@ export default function DocsHomeClient({
               <Link
                 key={doc.id}
                 href={getRoute.docsPage(doc.slug)}
+                prefetch={true}
                 className={docsHomeClientStyles.documentCard}
               >
                 <div className={docsHomeClientStyles.documentContent}>
@@ -175,10 +179,17 @@ export default function DocsHomeClient({
               No documents found
             </h3>
             <p className={docsHomeClientStyles.emptyDescription}>
-              No documents match the selected tags. Try removing some filters or
-              browse by category.
+              No documents match the selected tags. Try removing some filters
+              above or clearing all filters.
             </p>
             <div className={docsHomeClientStyles.emptyActions}>
+              <button
+                onClick={() => setSelectedTags([])}
+                className={`${docsHomeClientStyles.backButton} mr-3`}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Clear All Filters
+              </button>
               {isAuthenticated && (
                 <Link
                   href={getRoute.dashboard.documentsNew()}

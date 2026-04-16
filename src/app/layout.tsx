@@ -22,7 +22,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
-      <body className="min-h-full bg-background font-sans antialiased" suppressHydrationWarning>
+      <body
+        className="min-h-full bg-background font-sans antialiased"
+        suppressHydrationWarning
+      >
         <ClientOnly>
           <QueryProvider>
             {children}

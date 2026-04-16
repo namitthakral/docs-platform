@@ -73,10 +73,17 @@ export async function GET(request: NextRequest) {
       })) || []
     }
     
-    return NextResponse.json({ 
+    const response = NextResponse.json({ 
       tags: transformedTags,
       total: transformedTags.length 
     })
+    
+    // Cache tags for 5 minutes unless it's a search query (dynamic content)
+    if (!query) {
+      response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    }
+    
+    return response
   } catch (error) {
     console.error('Tags API error:', error)
     return NextResponse.json(

@@ -26,10 +26,15 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ 
+    const response = NextResponse.json({ 
       documents: documents || [],
       total: documents?.length || 0 
     })
+
+    // Add caching headers for better performance
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    
+    return response
   } catch (error) {
     console.error('Navigation API error:', error)
     return NextResponse.json(

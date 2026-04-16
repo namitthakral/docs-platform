@@ -39,7 +39,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ categories })
+    const response = NextResponse.json({ categories })
+    
+    // Cache categories for 5 minutes since they change infrequently
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    
+    return response
   } catch (error) {
     console.error("Error fetching categories:", error)
     return NextResponse.json(

@@ -18,7 +18,12 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json({ breadcrumbs })
+    const response = NextResponse.json({ breadcrumbs })
+    
+    // Cache breadcrumbs for 10 minutes - category hierarchies change very rarely
+    response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200')
+    
+    return response
   } catch (error) {
     console.error('Error fetching category breadcrumbs:', error)
     return NextResponse.json(

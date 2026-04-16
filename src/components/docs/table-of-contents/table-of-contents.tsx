@@ -1,15 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { TableOfContentsProps, Heading } from './table-of-contents.props'
 import { tableOfContentsStyles } from './table-of-contents.styles'
 
 export default function TableOfContents({ content }: TableOfContentsProps) {
-  const [headings, setHeadings] = useState<Heading[]>([])
   const [activeId, setActiveId] = useState<string>('')
 
-  useEffect(() => {
-    // Extract headings from markdown content
+  // Memoize heading extraction to avoid re-parsing on every render
+  const headings = useMemo(() => {
     const headingRegex = /^(#{1,6})\s+(.+)$/gm
     const extractedHeadings: Heading[] = []
     let match
@@ -25,7 +24,7 @@ export default function TableOfContents({ content }: TableOfContentsProps) {
       extractedHeadings.push({ id, text, level })
     }
 
-    setHeadings(extractedHeadings)
+    return extractedHeadings
   }, [content])
 
   useEffect(() => {
@@ -56,15 +55,15 @@ export default function TableOfContents({ content }: TableOfContentsProps) {
     }
   }, [headings])
 
-  if (headings.length === 0) {
-    return null
-  }
-
-  const scrollToHeading = (id: string) => {
+  const scrollToHeading = useCallback((id: string) => {
     const element = document.getElementById(id)
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' })
     }
+  }, [])
+
+  if (headings.length === 0) {
+    return null
   }
 
   return (

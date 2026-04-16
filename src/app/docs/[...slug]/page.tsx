@@ -13,12 +13,70 @@ import {
   CategoryWithPublic,
   DocPageProps,
 } from "@/types/docs"
+import { cache } from "react"
 import "highlight.js/styles/github.css"
 
-async function getDocumentByPath(
+// Cache published documents for 5 minutes
+export const revalidate = 300
+
+// Create separate functions for different use cases
+const getDocumentMetadata = cache(async function getDocumentMetadata(
+  slug: string[],
+  preview: boolean = false,
+): Promise<Pick<DocumentWithRelations, 'id' | 'title' | 'description' | 'categories'> | null> {
+  const queryStart = performance.now()
+  const supabase = await createClient()
+
+  let query = supabase.from("documents").select(`
+      id,
+      title,
+      description,
+      categories (
+        id,
+        name,
+        slug,
+        is_public
+      )
+    `)
+
+  if (slug.length === 1) {
+    query = query.eq("slug", slug[0])
+  } else if (slug.length === 2) {
+    const [categorySlug, documentSlug] = slug
+    const { data: category } = await supabase
+      .from("categories")
+      .select("id, is_public")
+      .eq("slug", categorySlug)
+      .single()
+
+    const categoryData = category as CategoryWithPublic | null
+    if (!categoryData || (!preview && !categoryData.is_public)) {
+      return null
+    }
+    query = query.eq("slug", documentSlug).eq("category_id", categoryData.id)
+  } else {
+    return null
+  }
+
+  if (!preview) {
+    query = query.eq("status", "published")
+  }
+
+  const { data: document } = await query.single()
+  const queryTime = performance.now() - queryStart
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🔍 getDocumentMetadata: ${queryTime.toFixed(2)}ms ${document ? '✅' : '❌'}`)
+  }
+  
+  return document as Pick<DocumentWithRelations, 'id' | 'title' | 'description' | 'categories'> | null
+})
+
+const getDocumentByPath = cache(async function getDocumentByPath(
   slug: string[],
   preview: boolean = false,
 ): Promise<DocumentWithRelations | null> {
+  const queryStart = performance.now()
   const supabase = await createClient()
 
   // Handle different slug patterns:
@@ -82,8 +140,14 @@ async function getDocumentByPath(
   }
 
   const { data: document } = await query.single()
+  const queryTime = performance.now() - queryStart
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🔍 getDocumentByPath: ${queryTime.toFixed(2)}ms ${document ? '✅' : '❌'}`)
+  }
+  
   return document as DocumentWithRelations | null
-}
+})
 
 export async function generateMetadata({
   params,
@@ -92,7 +156,8 @@ export async function generateMetadata({
   const { slug } = await params
   const { preview } = await searchParams
   const isPreview = preview === "true"
-  const document = await getDocumentByPath(slug, isPreview)
+  
+  const document = await getDocumentMetadata(slug, isPreview)
 
   if (!document) {
     return {
@@ -120,29 +185,29 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
   const { slug } = await params
   const { preview } = await searchParams
   const isPreview = preview === "true"
+  
   const document = await getDocumentByPath(slug, isPreview)
 
   if (!document) {
     notFound()
   }
 
-  // Check if current user can edit this document
+  // Parallelize user and breadcrumbs queries
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  const canEdit = user && user.id === document.user_id
+  
+  const [userResult, breadcrumbsResult] = await Promise.all([
+    supabase.auth.getUser(),
+    document.categories?.id 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ? (supabase as any).rpc("get_category_breadcrumbs", {
+          category_uuid: document.categories.id,
+        })
+      : Promise.resolve({ data: null })
+  ])
 
-  // Get breadcrumbs if document has a category
-  let breadcrumbs: Breadcrumb[] = []
-  if (document.categories?.id) {
-    const supabase = await createClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any).rpc("get_category_breadcrumbs", {
-      category_uuid: document.categories.id,
-    })
-    breadcrumbs = (data as Breadcrumb[] | null) || []
-  }
+  const { data: { user } } = userResult
+  const canEdit = user && user.id === document.user_id
+  const breadcrumbs: Breadcrumb[] = (breadcrumbsResult.data as Breadcrumb[] | null) || []
 
   return (
     <div className="max-w-none">

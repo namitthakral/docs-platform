@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { FileText, Calendar, RefreshCw, ChevronRight, ArrowLeft, Plus } from 'lucide-react'
+import { FileText, Calendar, RefreshCw, ChevronRight, ArrowLeft, Plus, X } from 'lucide-react'
 import { getRoute } from '@/config/routes'
 import TagFilter from '@/components/docs/tag-filter/tag-filter'
 import Breadcrumbs from '@/components/shared/breadcrumbs/breadcrumbs'
@@ -92,6 +92,7 @@ export default function CategoryPageClient({
               <Link
                 key={doc.id}
                 href={getRoute.docsPage(doc.slug)}
+                prefetch={true}
                 className={categoryPageClientStyles.documentCard}
               >
                 <div className={categoryPageClientStyles.documentContent}>
@@ -152,24 +153,43 @@ export default function CategoryPageClient({
         </div>
       ) : selectedTags.length > 0 ? (
         /* No results for tag filter */
-        <div className={categoryPageClientStyles.emptyState}>
-          <FileText className={categoryPageClientStyles.emptyIcon} />
-          <h3 className={categoryPageClientStyles.emptyTitle}>
-            No documents found
-          </h3>
-          <p className={categoryPageClientStyles.emptyDescription}>
-            No documents in this category match the selected tags. Try removing some filters.
-          </p>
-          <div className={categoryPageClientStyles.emptyActions}>
-            {isAuthenticated && (
-              <Link
-                href={getRoute.dashboard.documentsNew()}
-                className={categoryPageClientStyles.createButton}
+        <div className={categoryPageClientStyles.documentsSection}>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+            <h2 className={categoryPageClientStyles.documentsTitle}>
+              Filtered Documents
+            </h2>
+            {/* Keep Tag Filter visible so users can clear filters */}
+            <div className="sm:max-w-sm">
+              <TagFilter selectedTags={selectedTags} onTagsChange={handleTagsChange} />
+            </div>
+          </div>
+          
+          <div className={categoryPageClientStyles.emptyState}>
+            <FileText className={categoryPageClientStyles.emptyIcon} />
+            <h3 className={categoryPageClientStyles.emptyTitle}>
+              No documents found
+            </h3>
+            <p className={categoryPageClientStyles.emptyDescription}>
+              No documents in this category match the selected tags. Try removing some filters or clearing all filters above.
+            </p>
+            <div className={categoryPageClientStyles.emptyActions}>
+              <button
+                onClick={() => setSelectedTags([])}
+                className={`${categoryPageClientStyles.backButton} mr-3`}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Document
-              </Link>
-            )}
+                <X className="w-4 h-4 mr-2" />
+                Clear All Filters
+              </button>
+              {isAuthenticated && (
+                <Link
+                  href={getRoute.dashboard.documentsNew()}
+                  className={categoryPageClientStyles.createButton}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Document
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       ) : (

@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeSlug from 'rehype-slug'
@@ -8,7 +9,7 @@ import rehypeHighlight from 'rehype-highlight'
 import { MarkdownRendererProps } from './markdown-renderer.props'
 import { markdownRendererStyles } from './markdown-renderer.styles'
 
-export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
+function MarkdownRenderer({ content }: MarkdownRendererProps) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
@@ -136,3 +137,6 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
     </ReactMarkdown>
   )
 }
+
+// Memoize the entire component to prevent unnecessary re-renders
+export default memo(MarkdownRenderer)
