@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   experimental: {
-    // Optimize navigation for better ISR performance
+    // Optimize navigation for better static generation performance
     optimizePackageImports: ['react-markdown', 'lucide-react'],
   },
   transpilePackages: [

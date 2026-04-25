@@ -35,6 +35,8 @@ export const getRoute = {
     const slugPath = Array.isArray(slug) ? slug.join('/') : slug
     return `/docs/${slugPath}`
   },
+  docsCategory: (categorySlug: string) => `/docs/category/${categorySlug}`,
+  docsCategoryOther: () => `/docs/category/other`,
   
   // Dashboard routes (user content management)
   dashboard: {
@@ -78,6 +80,34 @@ export const getRoute = {
       documents: () => ROUTES.API.NAVIGATION.DOCUMENTS,
     },
   }
+} as const
+
+// Revalidation path utilities
+export const revalidationPaths = {
+  // Get paths to revalidate for document changes
+  forDocument: (documentSlug: string, categorySlug?: string): string[] => {
+    const paths: string[] = [getRoute.docs()]
+    
+    if (categorySlug) {
+      paths.push(
+        getRoute.docsPage([categorySlug, documentSlug]),
+        getRoute.docsCategory(categorySlug)
+      )
+    } else {
+      paths.push(
+        getRoute.docsPage(documentSlug),
+        getRoute.docsCategoryOther()
+      )
+    }
+    
+    return paths
+  },
+  
+  // Get paths to revalidate for category changes
+  forCategory: (categorySlug: string): string[] => [
+    getRoute.docs(),
+    getRoute.docsCategory(categorySlug)
+  ]
 } as const
 
 // Utility functions for common patterns

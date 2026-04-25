@@ -1,128 +1,55 @@
 "use client"
 
-import { Eye, Edit, ExternalLink, CheckCircle } from "lucide-react"
-import Link from "next/link"
-import { getRoute } from "@/config/routes"
 import { documentEditorHeaderStyles } from "./document-editor-header.styles"
 import type { DocumentEditorHeaderProps } from "./document-editor-header.props"
+import SaveStatus from "./save-status/save-status"
+import ActionButtons from "./action-buttons/action-buttons"
+import DocumentIndicators from "./document-indicators/document-indicators"
 
 export default function DocumentEditorHeader({
-  saving,
-  lastSaved,
-  hasUnsavedChanges,
-  hasMetadataChanges,
-  previewMode,
-  isDraftSaving,
-  isPublishing,
-  publishedSlug,
-  isPublished,
-  shouldDisableButtons,
-  hasJustSaved,
+  control,
+  isNewDocument,
+  saveState,
+  loadingState,
+  editorState,
   onTogglePreview,
   onSaveDraft,
   onPublish,
 }: DocumentEditorHeaderProps) {
+  // Destructure grouped props for readability
+  const { saving, lastSaved, hasJustSaved, publishedSlug } = saveState
+  const { isManualSaving } = loadingState
+  const { previewMode, hasUnsavedChanges } = editorState
+
   return (
     <div className={documentEditorHeaderStyles.header}>
       <div className={documentEditorHeaderStyles.headerContent}>
-        <div className={documentEditorHeaderStyles.saveStatus}>
-          <div className={documentEditorHeaderStyles.saveStatusIndicator}>
-            {saving && (
-              <>
-                <div className={documentEditorHeaderStyles.savingIndicator} />
-                <span className={documentEditorHeaderStyles.saveText}>
-                  Saving...
-                </span>
-              </>
-            )}
-            {publishedSlug && (
-              <>
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className={documentEditorHeaderStyles.saveText}>
-                  Published successfully!
-                </span>
-                <Link 
-                  href={getRoute.docsPage(publishedSlug)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sm text-blue-500 hover:text-blue-600 ml-2"
-                >
-                  View document
-                  <ExternalLink className="w-3 h-3 ml-1" />
-                </Link>
-              </>
-            )}
-            {!saving && hasUnsavedChanges && !hasJustSaved && (
-              <div className={documentEditorHeaderStyles.unsavedIndicator}>
-                <div className={documentEditorHeaderStyles.unsavedDot}></div>
-                <span className={documentEditorHeaderStyles.unsavedText}>
-                  {hasMetadataChanges
-                    ? "Unsaved changes (save to update title/metadata)"
-                    : "Unsaved changes"}
-                </span>
-              </div>
-            )}
-            {!saving && (!hasUnsavedChanges || hasJustSaved) && lastSaved && (
-              <div className={documentEditorHeaderStyles.savedIndicator}>
-                <div className={documentEditorHeaderStyles.savedDot}></div>
-                <span className={documentEditorHeaderStyles.saveText}>
-                  Saved {lastSaved.toLocaleTimeString()}
-                </span>
-              </div>
-            )}
-          </div>
+        {/* Save Status - only re-renders on save state changes */}
+        <SaveStatus
+          saving={saving}
+          lastSaved={lastSaved}
+          hasJustSaved={hasJustSaved}
+        />
 
-          <button
-            onClick={onTogglePreview}
-            className={documentEditorHeaderStyles.previewButton}
-          >
-            {previewMode ? (
-              <>
-                <Edit className="w-4 h-4" />
-                <span>Edit</span>
-              </>
-            ) : (
-              <>
-                <Eye className="w-4 h-4" />
-                <span>Preview</span>
-              </>
-            )}
-          </button>
-        </div>
+        <div className={documentEditorHeaderStyles.headerRight}>
+          {/* Document Indicators - only re-renders on preview changes */}
+          <DocumentIndicators
+            control={control}
+            publishedSlug={publishedSlug}
+            previewMode={previewMode}
+            onTogglePreview={onTogglePreview}
+          />
 
-        <div className={documentEditorHeaderStyles.actionButtons}>
-          <button
-            onClick={onSaveDraft}
-            disabled={isDraftSaving || isPublishing || shouldDisableButtons}
-            className={documentEditorHeaderStyles.draftButton}
-          >
-            {isDraftSaving ? (
-              <div className={documentEditorHeaderStyles.publishButtonLoading}>
-                <div
-                  className={documentEditorHeaderStyles.publishLoadingSpinner}
-                />
-                <span>Saving...</span>
-              </div>
-            ) : (
-              "Save Draft"
-            )}
-          </button>
-          <button
-            onClick={onPublish}
-            disabled={isDraftSaving || isPublishing || shouldDisableButtons}
-            className={documentEditorHeaderStyles.publishButton}
-          >
-            {isPublishing ? (
-              <div className={documentEditorHeaderStyles.publishButtonLoading}>
-                <div
-                  className={documentEditorHeaderStyles.publishLoadingSpinner}
-                />
-                <span>{isPublished ? "Updating..." : "Publishing..."}</span>
-              </div>
-            ) : (
-              isPublished && hasUnsavedChanges ? "Update" : "Publish"
-            )}
-          </button>
+          {/* Action Buttons - only re-renders on form/loading state changes */}
+          <ActionButtons
+            control={control}
+            isNewDocument={isNewDocument}
+            hasJustSaved={hasJustSaved}
+            hasUnsavedChanges={hasUnsavedChanges}
+            isManualSaving={isManualSaving}
+            onSaveDraft={onSaveDraft}
+            onPublish={onPublish}
+          />
         </div>
       </div>
     </div>

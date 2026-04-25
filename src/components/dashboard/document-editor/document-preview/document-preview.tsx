@@ -2,19 +2,25 @@
 
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { useWatch } from "react-hook-form"
 import { documentPreviewStyles } from "./document-preview.styles"
 import type { DocumentPreviewProps } from "./document-preview.props"
 
-export default function DocumentPreview({ formData }: DocumentPreviewProps) {
+export default function DocumentPreview({ control }: DocumentPreviewProps) {
+  // Watch only the fields needed for preview
+  const [title, description, content] = useWatch({
+    control,
+    name: ["title", "description", "content"],
+  })
   return (
     <div className={documentPreviewStyles.previewContainer}>
       <div className={documentPreviewStyles.previewHeader}>
         <h1 className={documentPreviewStyles.previewTitle}>
-          {formData.title || "Untitled Document"}
+          {title || "Untitled Document"}
         </h1>
-        {formData.description && (
+        {description && (
           <p className={documentPreviewStyles.previewDescription}>
-            {formData.description}
+            {description}
           </p>
         )}
       </div>
@@ -54,7 +60,9 @@ export default function DocumentPreview({ formData }: DocumentPreviewProps) {
                 </h6>
               ),
               p: ({ children }) => (
-                <p className="text-foreground/80 mb-4 leading-relaxed">{children}</p>
+                <p className="text-foreground/80 mb-4 leading-relaxed">
+                  {children}
+                </p>
               ),
               strong: ({ children }) => (
                 <strong className="font-semibold text-foreground">
@@ -88,7 +96,7 @@ export default function DocumentPreview({ formData }: DocumentPreviewProps) {
                 <li className="text-foreground/80">{children}</li>
               ),
               blockquote: ({ children }) => (
-                <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground mb-4 bg-primary/5 py-2 rounded-r">
+                <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground mb-4 bg-primary/5 py-2 rounded-r-lg">
                   {children}
                 </blockquote>
               ),
@@ -118,12 +126,14 @@ export default function DocumentPreview({ formData }: DocumentPreviewProps) {
                 </th>
               ),
               td: ({ children }) => (
-                <td className="px-4 py-2 text-foreground/80 border-r border-border last:border-r-0">{children}</td>
+                <td className="px-4 py-2 text-foreground/80 border-r border-border last:border-r-0">
+                  {children}
+                </td>
               ),
               hr: () => <hr className="border-border my-6" />,
             }}
           >
-            {formData.content ||
+            {content ||
               "*No content yet... Switch to edit mode to start writing.*"}
           </ReactMarkdown>
         </div>

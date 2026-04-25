@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createBuildTimeClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import Link from "next/link"
@@ -16,8 +16,59 @@ import {
 import { cache } from "react"
 import "highlight.js/styles/github.css"
 
-// Cache published documents for 5 minutes
-export const revalidate = 300
+// Static generation - will be revalidated on-demand when content changes
+
+// Generate static params for all published documents
+export async function generateStaticParams() {
+  try {
+    const supabase = createBuildTimeClient()
+    
+    // Get all published documents with their categories
+    const { data: documents, error } = await supabase
+      .from("documents")
+      .select(`
+        slug,
+        categories (
+          slug
+        )
+      `)
+      .eq("status", "published") as {
+        data: Array<{
+          slug: string
+          categories: { slug: string } | null
+        }> | null
+        error: Error | null
+      }
+    
+    if (error) {
+      console.warn('Failed to fetch documents for static generation:', error)
+      return []
+    }
+    
+    if (!documents) return []
+    
+    const params: { slug: string[] }[] = []
+    
+    for (const doc of documents) {
+      if (doc.categories?.slug) {
+        // Category-scoped document: /docs/category/document
+        params.push({
+          slug: [doc.categories.slug, doc.slug]
+        })
+      } else {
+        // Root-level document: /docs/document
+        params.push({
+          slug: [doc.slug]
+        })
+      }
+    }
+    
+    return params
+  } catch (error) {
+    console.warn('Error in generateStaticParams:', error)
+    return []
+  }
+}
 
 // Create separate functions for different use cases
 const getDocumentMetadata = cache(async function getDocumentMetadata(

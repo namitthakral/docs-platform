@@ -1,7 +1,6 @@
-import { DocumentData, Category } from "../document-editor.props"
+import { Control } from "react-hook-form"
+import { DocumentFormData } from "@/types/document-editor"
 
 export interface DocumentSidebarProps {
-  formData: DocumentData
-  categories: Category[]
-  onInputChange: (field: keyof DocumentData, value: string | null) => void
+  control: Control<DocumentFormData>
 }

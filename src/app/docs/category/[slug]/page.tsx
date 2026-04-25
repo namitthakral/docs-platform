@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createBuildTimeClient } from "@/lib/supabase/server"
 import { Metadata } from "next"
 import { Database } from "@/types/database"
 import { Breadcrumb } from "@/types/breadcrumb"
@@ -12,6 +12,38 @@ interface CategoryPageProps {
   params: Promise<{
     slug: string
   }>
+}
+
+// Generate static params for all public categories
+export async function generateStaticParams() {
+  try {
+    const supabase = createBuildTimeClient()
+    
+    const { data: categories, error } = await supabase
+      .from("categories")
+      .select("slug")
+      .eq("is_public", true) as {
+        data: Array<{ slug: string }> | null
+        error: Error | null
+      }
+    
+    if (error) {
+      console.warn('Failed to fetch categories for static generation:', error)
+      return [{ slug: "other" }]
+    }
+    
+    const params = categories?.map((category) => ({
+      slug: category.slug
+    })) || []
+    
+    // Add the special "other" category for uncategorized documents
+    params.push({ slug: "other" })
+    
+    return params
+  } catch (error) {
+    console.warn('Error in generateStaticParams:', error)
+    return [{ slug: "other" }]
+  }
 }
 
 export async function generateMetadata({

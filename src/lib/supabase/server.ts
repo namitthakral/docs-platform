@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { Database } from '@/types/database'
 
@@ -27,4 +28,16 @@ export const createClient = async () => {
       },
     }
   )
+}
+
+// Build-time client for generateStaticParams (no cookies/auth needed)
+export const createBuildTimeClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase environment variables for build-time client')
+  }
+
+  return createSupabaseClient<Database>(supabaseUrl, supabaseKey)
 }

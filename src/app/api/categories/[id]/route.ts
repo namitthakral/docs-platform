@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { Database } from '@/types/database'
+import { revalidatePath } from 'next/cache'
+import { revalidationPaths } from '@/config/routes'
 
 type Category = Database['public']['Tables']['categories']['Row']
 
@@ -90,6 +92,16 @@ export async function PUT(
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
+    // Trigger revalidation for docs pages if the category is public
+    if (category && category.is_public) {
+      try {
+        const pathsToRevalidate = revalidationPaths.forCategory(category.slug)
+        pathsToRevalidate.forEach(path => revalidatePath(path))
+      } catch (revalidationError) {
+        console.error('Failed to revalidate paths:', revalidationError)
+      }
+    }
+
     return NextResponse.json({ category })
   } catch (error) {
     console.error('Error updating category:', error)
@@ -118,7 +130,7 @@ export async function DELETE(
     // Check if category exists and get its details
     const { data: category, error: fetchError } = await supabase
       .from('categories')
-      .select('id, name')
+      .select('id, name, slug, is_public')
       .eq('id', id)
       .single()
 
@@ -175,6 +187,16 @@ export async function DELETE(
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    // Trigger revalidation for docs pages if the category was public
+    if (categoryData.is_public) {
+      try {
+        const pathsToRevalidate = revalidationPaths.forCategory(categoryData.slug)
+        pathsToRevalidate.forEach(path => revalidatePath(path))
+      } catch (revalidationError) {
+        console.error('Failed to revalidate paths:', revalidationError)
+      }
     }
 
     return NextResponse.json({ message: 'Category deleted successfully' })

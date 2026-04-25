@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { DocumentData } from "@/components/dashboard/document-editor/document-editor.props"
+import { DocumentData } from "@/types/document-editor"
 import { getRoute } from "@/config/routes"
 import { invalidateQueries, removeQueries } from "@/lib/query-keys"
 
@@ -116,4 +116,3 @@ export function useDeleteDocument() {
     },
   })
 }
-

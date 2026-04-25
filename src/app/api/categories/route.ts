@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
+import { revalidationPaths } from "@/config/routes"
 
 export async function GET(request: NextRequest) {
   try {
@@ -111,6 +113,16 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    // Trigger revalidation for docs pages if the category is public
+    if (category && category.is_public) {
+      try {
+        const pathsToRevalidate = revalidationPaths.forCategory(category.slug)
+        pathsToRevalidate.forEach(path => revalidatePath(path))
+      } catch (revalidationError) {
+        console.error('Failed to revalidate paths:', revalidationError)
+      }
     }
 
     return NextResponse.json({ category }, { status: 201 })

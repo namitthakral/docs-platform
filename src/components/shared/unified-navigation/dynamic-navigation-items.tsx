@@ -75,9 +75,9 @@ export function DynamicNavigationItems({
                   : styles.category.button.withoutDocs
               )}
             >
-              <div className="flex items-center">
+              <div className="flex items-center min-w-0 flex-1">
                 <Tag className={styles.category.icon} />
-                <span>{category.name}</span>
+                <span className="truncate">{category.name}</span>
                 {showCounts && (
                   <span className={styles.category.count}>
                     ({categoryDocs.length})
@@ -110,7 +110,7 @@ export function DynamicNavigationItems({
                     )}
                   >
                     <FileText className={styles.documents.icon} />
-                    {doc.title}
+                    <span className="truncate">{doc.title}</span>
                   </Link>
                 ))}
               </div>
@@ -129,9 +129,9 @@ export function DynamicNavigationItems({
               styles.category.button.withDocs
             )}
           >
-            <div className="flex items-center">
+            <div className="flex items-center min-w-0 flex-1">
               <Folder className={styles.category.icon} />
-              <span>Other</span>
+              <span className="truncate">Other</span>
               {showCounts && (
                 <span className={styles.category.count}>
                   ({documentsByCategory.uncategorized.length})
@@ -163,7 +163,7 @@ export function DynamicNavigationItems({
                   )}
                 >
                   <FileText className={styles.documents.icon} />
-                  {doc.title}
+                  <span className="truncate">{doc.title}</span>
                 </Link>
               ))}
             </div>

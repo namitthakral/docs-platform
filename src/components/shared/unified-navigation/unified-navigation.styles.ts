@@ -50,10 +50,10 @@ export const unifiedNavigationStyles = {
         "text-foreground/80 hover:text-foreground hover:bg-muted cursor-pointer",
       withoutDocs: "text-muted-foreground cursor-default",
     },
-    icon: "w-4 h-4 mr-2",
+    icon: "w-4 h-4 mr-2 flex-shrink-0",
     count: "ml-2 text-xs text-muted-foreground",
     expandIcon: {
-      base: "w-4 h-4 transition-transform",
+      base: "w-4 h-4 transition-transform flex-shrink-0",
       expanded: "rotate-90",
     },
   },
@@ -66,7 +66,7 @@ export const unifiedNavigationStyles = {
       active: "bg-primary/10 text-primary font-medium",
       inactive: "text-muted-foreground hover:text-foreground hover:bg-muted",
     },
-    icon: "w-3 h-3 mr-2",
+    icon: "w-3 h-3 mr-2 flex-shrink-0",
   },
 
   // User section styles

@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
+import { revalidationPaths } from '@/config/routes'
 
 export async function GET(
   request: NextRequest,
@@ -115,6 +117,21 @@ export async function PUT(
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
+    // Trigger revalidation for the updated document
+    if (document && status === 'published') {
+      try {
+        const pathsToRevalidate = revalidationPaths.forDocument(
+          document.slug,
+          document.categories?.slug
+        )
+        
+        pathsToRevalidate.forEach(path => revalidatePath(path))
+      } catch (revalidationError) {
+        console.error('Failed to revalidate paths:', revalidationError)
+        // Don't fail the request if revalidation fails
+      }
+    }
+
     return NextResponse.json({ document })
   } catch (error) {
     console.error('Error updating document:', error)
@@ -140,6 +157,24 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Get document details before deletion for revalidation
+    const { data: document } = await supabase
+      .from('documents')
+      .select(`
+        slug,
+        status,
+        categories (slug)
+      `)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single() as {
+        data: {
+          slug: string
+          status: string
+          categories: { slug: string } | null
+        } | null
+      }
+
     const { error } = await supabase
       .from('documents')
       .delete()
@@ -148,6 +183,21 @@ export async function DELETE(
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    // Trigger revalidation for the deleted document if it was published
+    if (document && document.status === 'published') {
+      try {
+        const pathsToRevalidate = revalidationPaths.forDocument(
+          document.slug,
+          document.categories?.slug
+        )
+        
+        pathsToRevalidate.forEach(path => revalidatePath(path))
+      } catch (revalidationError) {
+        console.error('Failed to revalidate paths:', revalidationError)
+        // Don't fail the request if revalidation fails
+      }
     }
 
     return NextResponse.json({ message: 'Document deleted successfully' })

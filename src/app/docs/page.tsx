@@ -7,8 +7,7 @@ import { Metadata } from "next"
 import { createClient } from "@/lib/supabase/server"
 import DocsHomeClient from "@/components/docs/docs-home-client/docs-home-client"
 
-// Cache docs home page for 5 minutes
-export const revalidate = 300
+// Static generation - will be revalidated on-demand when content changes
 
 export const metadata: Metadata = {
   title: "Documentation",

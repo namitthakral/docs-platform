@@ -1,5 +1,6 @@
-import { DocumentData } from "../document-editor.props"
+import { Control } from "react-hook-form"
+import { DocumentFormData } from "@/types/document-editor"
 
 export interface DocumentPreviewProps {
-  formData: DocumentData
+  control: Control<DocumentFormData>
 }

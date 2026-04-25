@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { DocumentStatus } from "@/types/document"
+import { revalidatePath } from "next/cache"
+import { revalidationPaths } from "@/config/routes"
 
 // Standardized API response format
 type ApiResponse<T = unknown> = {
@@ -123,11 +125,32 @@ export async function POST(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase.from("documents") as any)
       .insert(documentData)
-      .select()
+      .select(`
+        id,
+        title,
+        slug,
+        status,
+        categories (slug)
+      `)
       .single()
 
     if (error) {
       return createResponse(false, null, error.message, 400)
+    }
+
+    // Trigger revalidation if the document is published
+    if (data && data.status === 'published') {
+      try {
+        const pathsToRevalidate = revalidationPaths.forDocument(
+          data.slug,
+          data.categories?.slug
+        )
+        
+        pathsToRevalidate.forEach(path => revalidatePath(path))
+      } catch (revalidationError) {
+        console.error('Failed to revalidate paths:', revalidationError)
+        // Don't fail the request if revalidation fails
+      }
     }
 
     return createResponse(true, data, undefined, 201)
